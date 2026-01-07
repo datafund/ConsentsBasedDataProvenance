@@ -145,15 +145,16 @@ describe("ConsentReceipt", function () {
     });
 
     it("should return false for expired consent", async function () {
-      // Create consent that expires in 1 second
-      const expiryTime = Math.floor(Date.now() / 1000) + 1;
+      // Create consent that expires in 100 seconds
+      const block = await ethers.provider.getBlock("latest");
+      const expiryTime = block!.timestamp + 100;
       await consentReceipt.connect(user1)["giveConsent(string,uint256)"]("expiring", expiryTime);
 
       // Immediately should be valid
       expect(await consentReceipt.getConsentStatus(user1.address, "expiring")).to.be.true;
 
-      // Fast forward time (only works in test environment)
-      await ethers.provider.send("evm_increaseTime", [10]);
+      // Fast forward time past expiry
+      await ethers.provider.send("evm_increaseTime", [150]);
       await ethers.provider.send("evm_mine", []);
 
       // Should now be invalid

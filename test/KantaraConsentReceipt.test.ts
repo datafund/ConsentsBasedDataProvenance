@@ -277,8 +277,9 @@ describe("KantaraConsentReceipt", function () {
     });
 
     it("should return false for expired consent", async function () {
-      // Create consent that expires in 1 second
-      const expiryTime = Math.floor(Date.now() / 1000) + 1;
+      // Create consent that expires in 100 seconds
+      const block = await ethers.provider.getBlock("latest");
+      const expiryTime = block!.timestamp + 100;
 
       await kantaraConsent.connect(user1).giveConsent(
         dataController.address,
@@ -292,8 +293,8 @@ describe("KantaraConsentReceipt", function () {
 
       const receipts = await kantaraConsent.getUserReceipts(user1.address);
 
-      // Fast forward time
-      await ethers.provider.send("evm_increaseTime", [10]);
+      // Fast forward time past expiry
+      await ethers.provider.send("evm_increaseTime", [150]);
       await ethers.provider.send("evm_mine", []);
 
       expect(await kantaraConsent.isConsentValid(receipts[0])).to.be.false;
@@ -384,7 +385,8 @@ describe("KantaraConsentReceipt", function () {
     });
 
     it("should return false for expired consent", async function () {
-      const expiryTime = Math.floor(Date.now() / 1000) + 1;
+      const block = await ethers.provider.getBlock("latest");
+      const expiryTime = block!.timestamp + 100;
 
       await kantaraConsent.connect(user1).giveConsent(
         dataController.address,
@@ -396,8 +398,8 @@ describe("KantaraConsentReceipt", function () {
         POLICY_URL
       );
 
-      // Fast forward time
-      await ethers.provider.send("evm_increaseTime", [10]);
+      // Fast forward time past expiry
+      await ethers.provider.send("evm_increaseTime", [150]);
       await ethers.provider.send("evm_mine", []);
 
       expect(

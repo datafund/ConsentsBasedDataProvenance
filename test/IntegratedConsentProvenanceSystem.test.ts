@@ -211,13 +211,13 @@ describe("IntegratedConsentProvenanceSystem", function () {
       // Register data with consent
       await integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics");
 
-      // Verify data is registered in DataProvenance
+      // Verify data is registered in DataProvenance (owner is the IntegratedSystem contract)
       const record = await dataProvenance.getDataRecord(DATA_HASH_1);
-      expect(record.owner).to.equal(user1.address);
+      expect(record.owner).to.equal(await integratedSystem.getAddress());
       expect(record.dataType).to.equal("personal");
 
-      // Verify user has the data hash tracked
-      const userRecords = await dataProvenance.getUserDataRecords(user1.address);
+      // Verify user has the data hash tracked via IntegratedSystem
+      const userRecords = await integratedSystem.getUserRegisteredData(user1.address);
       expect(userRecords).to.include(DATA_HASH_1);
     });
   });

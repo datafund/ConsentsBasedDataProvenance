@@ -11,6 +11,9 @@ contract IntegratedConsentProvenanceSystem {
     // Track which consent was used for each data operation
     mapping(bytes32 => string) public dataConsentPurpose;
 
+    // Track data registered by each user through this contract
+    mapping(address => bytes32[]) private userRegisteredData;
+
     event DataRegisteredWithConsent(
         bytes32 indexed dataHash,
         address indexed owner,
@@ -60,6 +63,7 @@ contract IntegratedConsentProvenanceSystem {
 
         provenanceContract.registerData(_dataHash, _dataType);
         dataConsentPurpose[_dataHash] = _consentPurpose;
+        userRegisteredData[msg.sender].push(_dataHash);
 
         emit DataRegisteredWithConsent(_dataHash, msg.sender, _dataType, _consentPurpose);
     }
@@ -95,6 +99,7 @@ contract IntegratedConsentProvenanceSystem {
 
         provenanceContract.recordTransformation(_originalDataHash, _newDataHash, _transformation);
         dataConsentPurpose[_newDataHash] = _consentPurpose;
+        userRegisteredData[msg.sender].push(_newDataHash);
 
         emit DataTransformedWithConsent(
             _originalDataHash,
@@ -119,23 +124,31 @@ contract IntegratedConsentProvenanceSystem {
             "Consent still valid"
         );
 
-        bytes32[] memory userDataHashes = provenanceContract.getUserDataRecords(msg.sender);
+        // Use userRegisteredData which tracks data registered through this contract
+        bytes32[] memory userDataHashes = userRegisteredData[msg.sender];
         uint256 restrictedCount = 0;
 
         for (uint256 i = 0; i < userDataHashes.length; i++) {
             bytes32 dataHash = userDataHashes[i];
             // Check if this data was registered under the revoked consent purpose
             if (keccak256(bytes(dataConsentPurpose[dataHash])) == keccak256(bytes(_consentPurpose))) {
-                // Attempt to restrict the data (will only work if caller is owner)
+                // This contract is the owner in DataProvenance, so setDataStatus will work
                 try provenanceContract.setDataStatus(dataHash, DataProvenance.DataStatus.Restricted) {
                     restrictedCount++;
                 } catch {
-                    // Data might not be owned by caller anymore, skip
+                    // Data status might already be restricted or deleted, skip
                 }
             }
         }
 
         emit ConsentRevokedWithDataRestriction(msg.sender, 0, restrictedCount);
+    }
+
+    /// @notice Get user's registered data hashes through this contract
+    /// @param _user User address
+    /// @return bytes32[] Array of data hashes
+    function getUserRegisteredData(address _user) public view returns (bytes32[] memory) {
+        return userRegisteredData[_user];
     }
 
     /// @notice Get the consent purpose associated with data
