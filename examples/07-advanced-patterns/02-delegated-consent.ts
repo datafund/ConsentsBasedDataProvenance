@@ -67,8 +67,8 @@ async function main() {
   console.log("\n>>> Step 1: Patient grants delegation to guardian");
   console.log("    Patient authorizes family member for healthcare decisions.\n");
 
-  const oneYear = 365 * 24 * 60 * 60;
-  const delegationExpiry = currentTime + oneYear;
+  const sixMonths = 180 * 24 * 60 * 60;
+  const delegationExpiry = currentTime + sixMonths;
 
   // Patient grants delegation for specific purposes
   await consentProxy.connect(patient).grantDelegation(
@@ -79,7 +79,7 @@ async function main() {
 
   console.log("    ✓ Delegation granted");
   console.log(`      Delegate: ${guardian.address.slice(0, 10)}... (Guardian)`);
-  console.log(`      Valid until: ${new Date(delegationExpiry * 1000).toLocaleDateString()}`);
+  console.log(`      Valid until: ${new Date(delegationExpiry * 1000).toLocaleDateString()} (6 months)`);
   console.log("      Allowed purposes:");
   console.log(`        • ${TREATMENT}`);
   console.log(`        • ${EMERGENCY}`);
@@ -142,12 +142,15 @@ async function main() {
   // Step 6: Patient extends delegation
   console.log("\n>>> Step 6: Patient extends delegation");
 
-  const twoYears = 2 * 365 * 24 * 60 * 60;
-  const newExpiry = currentTime + twoYears;
+  // Get current block time for the extension (contract enforces max 365 days from now)
+  const extendBlock = await ethers.provider.getBlock("latest");
+  const extendTime = extendBlock!.timestamp;
+  const oneYear = 365 * 24 * 60 * 60;
+  const newExpiry = extendTime + oneYear; // Extend to max allowed (1 year from now)
 
   await consentProxy.connect(patient).extendDelegation(guardian.address, newExpiry);
 
-  console.log(`    ✓ Delegation extended`);
+  console.log(`    ✓ Delegation extended: 6 months → 1 year`);
   console.log(`      New expiry: ${new Date(newExpiry * 1000).toLocaleDateString()}`);
 
   // Step 7: View all delegations
