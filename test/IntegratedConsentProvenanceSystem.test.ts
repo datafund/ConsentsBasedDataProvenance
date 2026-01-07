@@ -1,0 +1,224 @@
+import { expect } from "chai";
+import { ethers } from "hardhat";
+import { ConsentReceipt, DataProvenance, IntegratedConsentProvenanceSystem } from "../typechain-types";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+
+describe("IntegratedConsentProvenanceSystem", function () {
+  let consentReceipt: ConsentReceipt;
+  let dataProvenance: DataProvenance;
+  let integratedSystem: IntegratedConsentProvenanceSystem;
+  let owner: SignerWithAddress;
+  let user1: SignerWithAddress;
+  let user2: SignerWithAddress;
+
+  const DATA_HASH_1 = ethers.keccak256(ethers.toUtf8Bytes("data1"));
+  const DATA_HASH_2 = ethers.keccak256(ethers.toUtf8Bytes("data2"));
+
+  beforeEach(async function () {
+    [owner, user1, user2] = await ethers.getSigners();
+
+    // Deploy ConsentReceipt
+    const ConsentReceiptFactory = await ethers.getContractFactory("ConsentReceipt");
+    consentReceipt = await ConsentReceiptFactory.deploy();
+    await consentReceipt.waitForDeployment();
+
+    // Deploy DataProvenance
+    const DataProvenanceFactory = await ethers.getContractFactory("DataProvenance");
+    dataProvenance = await DataProvenanceFactory.deploy();
+    await dataProvenance.waitForDeployment();
+
+    // Deploy IntegratedConsentProvenanceSystem
+    const IntegratedSystemFactory = await ethers.getContractFactory("IntegratedConsentProvenanceSystem");
+    integratedSystem = await IntegratedSystemFactory.deploy(
+      await consentReceipt.getAddress(),
+      await dataProvenance.getAddress()
+    );
+    await integratedSystem.waitForDeployment();
+  });
+
+  describe("Deployment", function () {
+    it("should store correct contract references", async function () {
+      expect(await integratedSystem.consentContract()).to.equal(await consentReceipt.getAddress());
+      expect(await integratedSystem.provenanceContract()).to.equal(await dataProvenance.getAddress());
+    });
+
+    it("should revert with zero address for consent contract", async function () {
+      const IntegratedSystemFactory = await ethers.getContractFactory("IntegratedConsentProvenanceSystem");
+      await expect(
+        IntegratedSystemFactory.deploy(ethers.ZeroAddress, await dataProvenance.getAddress())
+      ).to.be.revertedWith("Invalid consent contract address");
+    });
+
+    it("should revert with zero address for provenance contract", async function () {
+      const IntegratedSystemFactory = await ethers.getContractFactory("IntegratedConsentProvenanceSystem");
+      await expect(
+        IntegratedSystemFactory.deploy(await consentReceipt.getAddress(), ethers.ZeroAddress)
+      ).to.be.revertedWith("Invalid provenance contract address");
+    });
+  });
+
+  describe("registerDataWithConsent", function () {
+    it("should allow registration with valid consent", async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+
+      await expect(
+        integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics")
+      )
+        .to.emit(integratedSystem, "DataRegisteredWithConsent")
+        .withArgs(DATA_HASH_1, user1.address, "personal", "analytics");
+    });
+
+    it("should track consent purpose for data", async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+      await integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics");
+
+      expect(await integratedSystem.getDataConsentPurpose(DATA_HASH_1)).to.equal("analytics");
+    });
+
+    it("should revert without valid consent", async function () {
+      await expect(
+        integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics")
+      ).to.be.revertedWith("No valid consent for this purpose");
+    });
+
+    it("should revert with wrong purpose consent", async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("marketing");
+
+      await expect(
+        integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics")
+      ).to.be.revertedWith("No valid consent for this purpose");
+    });
+
+    it("should revert after consent is revoked", async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+      await consentReceipt.connect(user1).revokeConsent(0);
+
+      await expect(
+        integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics")
+      ).to.be.revertedWith("No valid consent for this purpose");
+    });
+  });
+
+  describe("accessDataWithConsent", function () {
+    beforeEach(async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+      await integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics");
+    });
+
+    it("should allow access with valid consent", async function () {
+      await consentReceipt.connect(user2)["giveConsent(string)"]("analytics");
+
+      await expect(
+        integratedSystem.connect(user2).accessDataWithConsent(DATA_HASH_1, "analytics")
+      )
+        .to.emit(integratedSystem, "DataAccessedWithConsent")
+        .withArgs(DATA_HASH_1, user2.address, "analytics");
+    });
+
+    it("should revert without valid consent", async function () {
+      await expect(
+        integratedSystem.connect(user2).accessDataWithConsent(DATA_HASH_1, "analytics")
+      ).to.be.revertedWith("No valid consent for this purpose");
+    });
+  });
+
+  describe("transformDataWithConsent", function () {
+    beforeEach(async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+      await integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics");
+    });
+
+    it("should allow transformation with valid consent", async function () {
+      await expect(
+        integratedSystem
+          .connect(user1)
+          .transformDataWithConsent(DATA_HASH_1, DATA_HASH_2, "anonymized", "analytics")
+      )
+        .to.emit(integratedSystem, "DataTransformedWithConsent")
+        .withArgs(DATA_HASH_1, DATA_HASH_2, "anonymized", "analytics");
+    });
+
+    it("should track consent purpose for transformed data", async function () {
+      await integratedSystem
+        .connect(user1)
+        .transformDataWithConsent(DATA_HASH_1, DATA_HASH_2, "anonymized", "analytics");
+
+      expect(await integratedSystem.getDataConsentPurpose(DATA_HASH_2)).to.equal("analytics");
+    });
+
+    it("should revert without valid consent", async function () {
+      await consentReceipt.connect(user1).revokeConsent(0);
+
+      await expect(
+        integratedSystem
+          .connect(user1)
+          .transformDataWithConsent(DATA_HASH_1, DATA_HASH_2, "anonymized", "analytics")
+      ).to.be.revertedWith("No valid consent for this purpose");
+    });
+  });
+
+  describe("restrictDataForPurpose", function () {
+    beforeEach(async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+      await integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics");
+    });
+
+    it("should restrict data after consent revocation", async function () {
+      // Revoke consent first (directly on ConsentReceipt)
+      await consentReceipt.connect(user1).revokeConsent(0);
+
+      // Then restrict associated data
+      await expect(integratedSystem.connect(user1).restrictDataForPurpose("analytics"))
+        .to.emit(integratedSystem, "ConsentRevokedWithDataRestriction");
+
+      // Verify data is now restricted
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.status).to.equal(1); // Restricted
+    });
+
+    it("should revert if consent is still valid", async function () {
+      await expect(
+        integratedSystem.connect(user1).restrictDataForPurpose("analytics")
+      ).to.be.revertedWith("Consent still valid");
+    });
+  });
+
+  describe("isDataAccessAllowed", function () {
+    beforeEach(async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+      await integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics");
+    });
+
+    it("should return true when user has valid consent", async function () {
+      await consentReceipt.connect(user2)["giveConsent(string)"]("analytics");
+      expect(await integratedSystem.isDataAccessAllowed(user2.address, DATA_HASH_1)).to.be.true;
+    });
+
+    it("should return false when user has no consent", async function () {
+      expect(await integratedSystem.isDataAccessAllowed(user2.address, DATA_HASH_1)).to.be.false;
+    });
+
+    it("should return false for data without consent purpose", async function () {
+      expect(await integratedSystem.isDataAccessAllowed(user1.address, DATA_HASH_2)).to.be.false;
+    });
+  });
+
+  describe("Cross-contract interaction", function () {
+    it("should properly link consent and data operations", async function () {
+      // Give consent
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+
+      // Register data with consent
+      await integratedSystem.connect(user1).registerDataWithConsent(DATA_HASH_1, "personal", "analytics");
+
+      // Verify data is registered in DataProvenance
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.owner).to.equal(user1.address);
+      expect(record.dataType).to.equal("personal");
+
+      // Verify user has the data hash tracked
+      const userRecords = await dataProvenance.getUserDataRecords(user1.address);
+      expect(userRecords).to.include(DATA_HASH_1);
+    });
+  });
+});
