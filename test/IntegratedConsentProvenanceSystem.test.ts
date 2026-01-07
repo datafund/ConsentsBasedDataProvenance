@@ -221,4 +221,95 @@ describe("IntegratedConsentProvenanceSystem", function () {
       expect(userRecords).to.include(DATA_HASH_1);
     });
   });
+
+  describe("Delegated Registration", function () {
+    beforeEach(async function () {
+      // User1 authorizes user2 as a delegate for consent checking
+      await dataProvenance.connect(user1).setDelegate(user2.address, true);
+      // User1 authorizes the IntegratedSystem contract as a delegate in DataProvenance
+      // This allows IntegratedSystem to call registerDataFor on behalf of user1
+      await dataProvenance.connect(user1).setDelegate(await integratedSystem.getAddress(), true);
+      // User1 gives consent
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+    });
+
+    it("should allow delegate to register data for owner with consent", async function () {
+      await expect(
+        integratedSystem.connect(user2).registerDataForWithConsent(
+          DATA_HASH_1,
+          "personal",
+          "analytics",
+          user1.address
+        )
+      )
+        .to.emit(integratedSystem, "DelegatedDataRegistered")
+        .withArgs(DATA_HASH_1, user1.address, user2.address, "personal", "analytics");
+    });
+
+    it("should track data in actual owner's records", async function () {
+      await integratedSystem.connect(user2).registerDataForWithConsent(
+        DATA_HASH_1,
+        "personal",
+        "analytics",
+        user1.address
+      );
+
+      const userRecords = await integratedSystem.getUserRegisteredData(user1.address);
+      expect(userRecords).to.include(DATA_HASH_1);
+
+      // Delegate should not have it in their records
+      const delegateRecords = await integratedSystem.getUserRegisteredData(user2.address);
+      expect(delegateRecords).to.not.include(DATA_HASH_1);
+    });
+
+    it("should set actual owner as data owner in DataProvenance", async function () {
+      await integratedSystem.connect(user2).registerDataForWithConsent(
+        DATA_HASH_1,
+        "personal",
+        "analytics",
+        user1.address
+      );
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.owner).to.equal(user1.address);
+    });
+
+    it("should revert when caller is not authorized delegate", async function () {
+      await expect(
+        integratedSystem.connect(owner).registerDataForWithConsent(
+          DATA_HASH_1,
+          "personal",
+          "analytics",
+          user1.address
+        )
+      ).to.be.revertedWith("Not authorized delegate");
+    });
+
+    it("should revert when owner has no valid consent", async function () {
+      // Revoke user1's consent
+      await consentReceipt.connect(user1).revokeConsent(0);
+
+      await expect(
+        integratedSystem.connect(user2).registerDataForWithConsent(
+          DATA_HASH_1,
+          "personal",
+          "analytics",
+          user1.address
+        )
+      ).to.be.revertedWith("Owner has no valid consent for this purpose");
+    });
+
+    it("should revert when delegate authorization is revoked", async function () {
+      await dataProvenance.connect(user1).setDelegate(user2.address, false);
+
+      await expect(
+        integratedSystem.connect(user2).registerDataForWithConsent(
+          DATA_HASH_1,
+          "personal",
+          "analytics",
+          user1.address
+        )
+      ).to.be.revertedWith("Not authorized delegate");
+    });
+  });
 });
