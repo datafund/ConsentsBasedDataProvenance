@@ -174,10 +174,8 @@ async function main() {
     JSON.stringify({ purpose: "marketing", reason: "user_request" })
   );
 
-  // User 5 requests deletion
+  // User 5 requests deletion (requestDeletion handles everything including proof generation)
   await dataDeletion.connect(dpo).requestDeletion(dataHashes[4], "GDPR request");
-  const deletionProof = ethers.keccak256(ethers.toUtf8Bytes(`deletion_${dataHashes[4]}`));
-  await dataDeletion.connect(dpo).verifyDeletion(dataHashes[4], deletionProof);
 
   await auditLog.connect(dpo).recordAudit(
     AuditAction.DataDeleted,
