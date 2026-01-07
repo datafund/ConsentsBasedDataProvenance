@@ -212,4 +212,164 @@ describe("ConsentReceipt", function () {
       expect(count).to.equal(10);
     });
   });
+
+  describe("Batch Operations", function () {
+    it("should batch give consent for multiple purposes", async function () {
+      const purposes = ["analytics", "marketing", "research"];
+      const expiryTimes = [0, 0, 0];
+
+      await consentReceipt.connect(user1).batchGiveConsent(purposes, expiryTimes);
+
+      expect(await consentReceipt.getConsentStatus(user1.address, "analytics")).to.be.true;
+      expect(await consentReceipt.getConsentStatus(user1.address, "marketing")).to.be.true;
+      expect(await consentReceipt.getConsentStatus(user1.address, "research")).to.be.true;
+      expect(await consentReceipt.getUserConsentsCount(user1.address)).to.equal(3);
+    });
+
+    it("should batch revoke multiple consents", async function () {
+      const purposes = ["analytics", "marketing", "research"];
+      const expiryTimes = [0, 0, 0];
+
+      await consentReceipt.connect(user1).batchGiveConsent(purposes, expiryTimes);
+      await consentReceipt.connect(user1).batchRevokeConsent([0, 2]);
+
+      expect(await consentReceipt.getConsentStatus(user1.address, "analytics")).to.be.false;
+      expect(await consentReceipt.getConsentStatus(user1.address, "marketing")).to.be.true;
+      expect(await consentReceipt.getConsentStatus(user1.address, "research")).to.be.false;
+    });
+
+    it("should revert batch consent with array length mismatch", async function () {
+      await expect(
+        consentReceipt.connect(user1).batchGiveConsent(["a", "b"], [0])
+      ).to.be.revertedWith("Array length mismatch");
+    });
+
+    it("should revert batch consent with empty array", async function () {
+      await expect(
+        consentReceipt.connect(user1).batchGiveConsent([], [])
+      ).to.be.revertedWith("Empty purposes array");
+    });
+  });
+
+  describe("EIP-712 Signed Consent", function () {
+    async function signConsent(
+      signer: SignerWithAddress,
+      purpose: string,
+      expiryTime: number,
+      nonce: number,
+      deadline: number
+    ) {
+      const domain = {
+        name: "ConsentReceipt",
+        version: "1",
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: await consentReceipt.getAddress()
+      };
+
+      const types = {
+        Consent: [
+          { name: "user", type: "address" },
+          { name: "purpose", type: "string" },
+          { name: "expiryTime", type: "uint256" },
+          { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint256" }
+        ]
+      };
+
+      const value = {
+        user: signer.address,
+        purpose: purpose,
+        expiryTime: expiryTime,
+        nonce: nonce,
+        deadline: deadline
+      };
+
+      const signature = await signer.signTypedData(domain, types, value);
+      return ethers.Signature.from(signature);
+    }
+
+    it("should give consent via signature", async function () {
+      const block = await ethers.provider.getBlock("latest");
+      const deadline = block!.timestamp + 3600; // 1 hour from now
+      const nonce = await consentReceipt.getNonce(user1.address);
+
+      const sig = await signConsent(user1, "analytics", 0, Number(nonce), deadline);
+
+      await expect(
+        consentReceipt.connect(user2).giveConsentBySig(
+          user1.address,
+          "analytics",
+          0,
+          deadline,
+          sig.v,
+          sig.r,
+          sig.s
+        )
+      )
+        .to.emit(consentReceipt, "ConsentGivenBySig")
+        .withArgs(user1.address, "analytics", user2.address);
+
+      expect(await consentReceipt.getConsentStatus(user1.address, "analytics")).to.be.true;
+    });
+
+    it("should increment nonce after use", async function () {
+      const block = await ethers.provider.getBlock("latest");
+      const deadline = block!.timestamp + 3600;
+
+      expect(await consentReceipt.getNonce(user1.address)).to.equal(0);
+
+      const sig = await signConsent(user1, "analytics", 0, 0, deadline);
+      await consentReceipt.connect(user2).giveConsentBySig(
+        user1.address, "analytics", 0, deadline, sig.v, sig.r, sig.s
+      );
+
+      expect(await consentReceipt.getNonce(user1.address)).to.equal(1);
+    });
+
+    it("should reject expired signature", async function () {
+      const block = await ethers.provider.getBlock("latest");
+      const deadline = block!.timestamp - 100; // In the past
+
+      const sig = await signConsent(user1, "analytics", 0, 0, deadline);
+
+      await expect(
+        consentReceipt.connect(user2).giveConsentBySig(
+          user1.address, "analytics", 0, deadline, sig.v, sig.r, sig.s
+        )
+      ).to.be.revertedWith("Signature expired");
+    });
+
+    it("should reject invalid signature", async function () {
+      const block = await ethers.provider.getBlock("latest");
+      const deadline = block!.timestamp + 3600;
+
+      // Sign with user2's key but try to give consent for user1
+      const sig = await signConsent(user2, "analytics", 0, 0, deadline);
+
+      await expect(
+        consentReceipt.connect(user2).giveConsentBySig(
+          user1.address, "analytics", 0, deadline, sig.v, sig.r, sig.s
+        )
+      ).to.be.revertedWith("Invalid signature");
+    });
+
+    it("should reject replay attack (same nonce)", async function () {
+      const block = await ethers.provider.getBlock("latest");
+      const deadline = block!.timestamp + 3600;
+
+      const sig = await signConsent(user1, "analytics", 0, 0, deadline);
+
+      // First call succeeds
+      await consentReceipt.connect(user2).giveConsentBySig(
+        user1.address, "analytics", 0, deadline, sig.v, sig.r, sig.s
+      );
+
+      // Replay with same signature fails (nonce incremented)
+      await expect(
+        consentReceipt.connect(user2).giveConsentBySig(
+          user1.address, "analytics", 0, deadline, sig.v, sig.r, sig.s
+        )
+      ).to.be.revertedWith("Invalid signature");
+    });
+  });
 });
