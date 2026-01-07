@@ -245,7 +245,8 @@ describe("Integration Tests", function () {
     const ConsentType = { Express: 0 };
 
     it("should create and verify Kantara-compliant consent receipt", async function () {
-      const expiryTime = Math.floor(Date.now() / 1000) + 86400 * 30; // 30 days
+      const block = await ethers.provider.getBlock("latest");
+      const expiryTime = block!.timestamp + 86400 * 30; // 30 days from blockchain time
 
       await kantaraConsent.connect(dataSubject).giveConsent(
         dataController.address,
