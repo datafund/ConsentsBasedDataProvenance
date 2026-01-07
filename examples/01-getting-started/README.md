@@ -46,6 +46,20 @@ npx hardhat run examples/01-getting-started/03-revoke-consent.ts --network local
 - Consent status after revocation
 - Maintaining consent history
 
+### 04 - Integrated System
+The main orchestrator that ties consent and data provenance together.
+
+```bash
+npx hardhat run examples/01-getting-started/04-integrated-system.ts --network localhost
+```
+
+**Demonstrates:**
+- IntegratedConsentProvenanceSystem contract
+- Consent-verified data operations
+- Automatic consent checking before data access
+- Data restriction on consent revocation
+- Complete audit trail with consent linkage
+
 ## Key Concepts
 
 ### Consent Structure
