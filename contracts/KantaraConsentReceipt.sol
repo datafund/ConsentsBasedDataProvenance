@@ -195,6 +195,8 @@ contract KantaraConsentReceipt {
     mapping(address => uint256) private userNonces;
     mapping(bytes32 => ConsentReceipt) private consentReceipts;
     mapping(address => bytes32[]) private userReceipts;
+    // Optimization: Track receipts by (subject, controller, purpose) for faster hasValidConsent lookup
+    mapping(address => mapping(address => mapping(Purpose => bytes32[]))) private controllerPurposeReceipts;
 
     event ConsentGiven(
         bytes32 indexed receiptId,
@@ -246,9 +248,11 @@ contract KantaraConsentReceipt {
         newReceipt.thirdPartyDisclosure = _thirdPartyDisclosure;
         newReceipt.policyUrl = _policyUrl;
 
-        // Copy arrays
+        // Copy arrays and track for optimization
         for (uint256 i = 0; i < _purposes.length; i++) {
             newReceipt.purposes.push(_purposes[i]);
+            // Optimization: Track receipt by (subject, controller, purpose) for faster lookup
+            controllerPurposeReceipts[msg.sender][_dataController][_purposes[i]].push(receiptId);
         }
         for (uint256 i = 0; i < _piCategories.length; i++) {
             newReceipt.piCategories.push(_piCategories[i]);
@@ -334,6 +338,7 @@ contract KantaraConsentReceipt {
     }
 
     /// @notice Check if user has valid consent for a specific purpose with a data controller
+    /// @dev Optimized: Uses index mapping instead of iterating through all receipts and purposes
     /// @param _dataSubject User address
     /// @param _dataController Data controller address
     /// @param _purpose Purpose to check
@@ -343,16 +348,11 @@ contract KantaraConsentReceipt {
         address _dataController,
         Purpose _purpose
     ) public view returns (bool) {
-        bytes32[] memory receipts = userReceipts[_dataSubject];
-        for (uint i = 0; i < receipts.length; i++) {
-            ConsentReceipt storage receipt = consentReceipts[receipts[i]];
-            if (receipt.dataController == _dataController &&
-                isConsentValid(receipts[i])) {
-                for (uint j = 0; j < receipt.purposes.length; j++) {
-                    if (receipt.purposes[j] == _purpose) {
-                        return true;
-                    }
-                }
+        // Optimization: Only check receipts for this specific (subject, controller, purpose) combination
+        bytes32[] memory receiptIds = controllerPurposeReceipts[_dataSubject][_dataController][_purpose];
+        for (uint256 i = 0; i < receiptIds.length; i++) {
+            if (isConsentValid(receiptIds[i])) {
+                return true;
             }
         }
         return false;
@@ -370,5 +370,32 @@ contract KantaraConsentReceipt {
     /// @return uint256 Current nonce
     function getUserNonce(address _user) public view returns (uint256) {
         return userNonces[_user];
+    }
+
+    // ============ Batch Operations ============
+
+    /// @notice Revoke multiple consent receipts in a single transaction
+    /// @param _receiptIds Array of receipt IDs to revoke
+    function batchRevokeConsent(bytes32[] memory _receiptIds) public {
+        require(_receiptIds.length > 0, "Empty receipt IDs array");
+        require(_receiptIds.length <= 50, "Too many receipts");
+
+        for (uint256 i = 0; i < _receiptIds.length; i++) {
+            revokeConsent(_receiptIds[i]);
+        }
+    }
+
+    /// @notice Check validity of multiple receipts in a single call
+    /// @param _receiptIds Array of receipt IDs to check
+    /// @return bool[] Array of validity results
+    function batchIsConsentValid(bytes32[] memory _receiptIds) public view returns (bool[] memory) {
+        require(_receiptIds.length > 0, "Empty receipt IDs array");
+        require(_receiptIds.length <= 100, "Too many receipts");
+
+        bool[] memory results = new bool[](_receiptIds.length);
+        for (uint256 i = 0; i < _receiptIds.length; i++) {
+            results[i] = isConsentValid(_receiptIds[i]);
+        }
+        return results;
     }
 }
