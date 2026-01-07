@@ -444,6 +444,40 @@ const isValid = await kantaraConsent.hasValidConsent(
 );
 ```
 
+## Interactive Examples
+
+The `examples/` directory contains **40+ runnable TypeScript scripts** demonstrating real-world usage across multiple industries:
+
+| Category | Examples | Description |
+|----------|----------|-------------|
+| [Getting Started](examples/01-getting-started/) | 4 | Basic consent, expiry, revocation, integrated system |
+| [Healthcare](examples/02-healthcare/) | 5 | Patient consent, HIPAA, medical records, deletion |
+| [Financial Services](examples/03-financial-services/) | 5 | KYC, credit checks, regulatory reporting |
+| [Marketing](examples/04-marketing/) | 5 | Email consent, cookies, GDPR/CCPA compliance |
+| [Research](examples/05-research/) | 4 | Study enrollment, anonymization, multi-institution |
+| [IoT & Supply Chain](examples/06-iot-supply-chain/) | 4 | Device registration, sensor data, manufacturing |
+| [Advanced Patterns](examples/07-advanced-patterns/) | 5 | Meta-transactions, delegation, RBAC, batch ops |
+| [Compliance & Audit](examples/08-compliance-audit/) | 5 | GDPR, Kantara, audit queries, breach investigation |
+| [Integration Patterns](examples/09-integration-patterns/) | 4 | Events, backend services, error handling |
+
+### Running Examples
+
+```bash
+# Start local blockchain
+docker-compose up -d
+
+# Run any example via npm script
+npm run example:basic-consent
+npm run example:healthcare:hipaa
+npm run example:compliance:gdpr
+npm run example:integration:events
+
+# Or run directly
+npx hardhat run examples/01-getting-started/04-integrated-system.ts --network localhost
+```
+
+See [`examples/README.md`](examples/README.md) for the complete guide.
+
 ## Testing
 
 ### Run All Tests
