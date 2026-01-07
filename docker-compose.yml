@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  hardhat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hardhat-node
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./contracts:/app/contracts
+      - ./scripts:/app/scripts
+      - ./test:/app/test
+      - ./hardhat.config.ts:/app/hardhat.config.ts
+      - ./artifacts:/app/artifacts
+      - ./cache:/app/cache
+      - ./typechain-types:/app/typechain-types
+    environment:
+      - REPORT_GAS=true
+    command: npx hardhat node --hostname 0.0.0.0
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Service for running tests
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hardhat-test
+    volumes:
+      - ./contracts:/app/contracts
+      - ./scripts:/app/scripts
+      - ./test:/app/test
+      - ./hardhat.config.ts:/app/hardhat.config.ts
+      - ./artifacts:/app/artifacts
+      - ./cache:/app/cache
+      - ./typechain-types:/app/typechain-types
+    environment:
+      - REPORT_GAS=true
+    command: npx hardhat test
+    profiles:
+      - test
