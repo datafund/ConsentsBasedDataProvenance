@@ -259,26 +259,24 @@ async function main() {
   // Step 5: Article 17 - Right to erasure
   console.log("\n>>> Article 17: Data subject exercises right to erasure");
 
-  // Request deletion
+  // Request deletion (this also creates the deletion proof)
   await dataDeletion.connect(controller).requestDeletion(dataHash, "GDPR Article 17 request");
 
-  console.log("    ✓ Deletion requested");
+  console.log("    ✓ Deletion requested and processed");
   console.log("      Reason: GDPR Article 17 request");
 
-  // Verify deletion
-  const deletionHash = ethers.keccak256(ethers.toUtf8Bytes(`deletion_proof_${dataHash}`));
-  await dataDeletion.connect(controller).verifyDeletion(dataHash, deletionHash);
+  // Verify deletion was completed
+  const [isDeleted, deletionRecord] = await dataDeletion.verifyDeletion(dataHash);
 
   console.log("    ✓ Deletion verified with cryptographic proof");
-  console.log(`      Proof hash: ${deletionHash.slice(0, 20)}...`);
+  console.log(`      Proof hash: ${deletionRecord.proofHash.slice(0, 20)}...`);
 
   // Check data is no longer accessible
   const isAccessible = await dataDeletion.isDataAccessible(dataHash);
   console.log(`      Data accessible: ${isAccessible ? "YES (ERROR!)" : "NO (Correct)"}`);
 
-  // Get deletion certificate
-  const deletionRecord = await dataDeletion.getDeletionRecord(dataHash);
-  console.log(`      Certificate issued: Block ${deletionRecord.verificationTimestamp}`);
+  // Show deletion certificate details
+  console.log(`      Certificate issued: Block ${deletionRecord.deletionTimestamp}`);
 
   await auditLog.connect(controller).recordAudit(
     AuditAction.DataDeleted,
@@ -287,7 +285,7 @@ async function main() {
     JSON.stringify({
       gdprArticle: "17",
       reason: "data_subject_request",
-      certificateHash: deletionHash
+      certificateHash: deletionRecord.proofHash
     })
   );
 
