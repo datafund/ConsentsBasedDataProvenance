@@ -7,6 +7,8 @@ ignition/deployments/*/journal.jsonl
 ignition/deployments/*/artifacts/
 ignition/deployments/*/build-info/
 deployments.json
+dist/*
+!dist/abis/
 .*/
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -20,7 +22,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
