@@ -660,11 +660,11 @@ Ignition deploys all 9 contracts in dependency order:
 - **Batch 1**: ConsentReceipt, DataProvenance, KantaraConsentReceipt, ConsentAuditLog, ConsentProxy, PurposeRegistry
 - **Batch 2**: DataAccessControl, DataDeletion, IntegratedConsentProvenanceSystem
 
-Deployed addresses are tracked in `ignition/deployments/chain-<chainId>/deployed_addresses.json`.
+Deployed addresses are saved to `ignition/deployments/chain-<chainId>/deployed_addresses.json` and a human-readable summary is auto-generated at [`deployments.md`](deployments.md).
 
 ### Contract Verification
 
-Base Sepolia and Chiado use Blockscout (no API key needed). Sepolia uses Etherscan (requires `ETHERSCAN_API_KEY`).
+Contracts can be verified on Blockscout (no API key needed) — verification is manual, not automatic. Base Sepolia and Chiado use Blockscout. Sepolia uses Etherscan (requires `ETHERSCAN_API_KEY`).
 
 ```bash
 # Verify individual contracts on Blockscout (no API key needed)
@@ -683,10 +683,10 @@ npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
 
 ### ABIs
 
-Once a contract is verified, the ABI is available via:
-- **Blockscout UI**: Contract page → "Contract" tab → ABI section
-- **Blockscout API**: `https://base-sepolia.blockscout.com/api?module=contract&action=getabi&address=<ADDRESS>`
-- **Local build**: Run `npx hardhat compile`, ABIs are in `artifacts/contracts/<Name>.sol/<Name>.json`
+ABIs are available from multiple sources:
+- **`dist/abis/<ContractName>.json`** — ABI-only JSON files, auto-generated after each deployment (`npm run post-deploy`)
+- **Blockscout** (verified contracts only): Contract page → "Contract" tab → ABI section, or API: `https://base-sepolia.blockscout.com/api?module=contract&action=getabi&address=<ADDRESS>`
+- **Local build**: Run `npx hardhat compile`, full artifacts in `artifacts/contracts/<Name>.sol/<Name>.json`
 
 ## Contributing
 
