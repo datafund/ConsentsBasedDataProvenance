@@ -633,20 +633,42 @@ event ConsentUpdated(bytes32 indexed receiptId, address indexed dataSubject);
 ### Local Deployment
 
 ```bash
-npx hardhat run scripts/deploy.ts --network localhost
+# Legacy deploy script
+npm run deploy:local
+
+# Hardhat Ignition (deploys all 9 contracts with dependency ordering)
+npm run node                        # Start local node in another terminal
+npm run deploy:ignition:local
 ```
 
 ### Testnet Deployment
 
+Supported testnets: **Sepolia**, **Gnosis Chiado**, **Base Sepolia**.
+
 ```bash
-# Configure network in hardhat.config.ts first
-npx hardhat run scripts/deploy.ts --network sepolia
+# 1. Copy .env.example and configure
+cp .env.example .env
+# Edit .env: set DEPLOYER_PRIVATE_KEY and (optionally) RPC URLs / API keys
+
+# 2. Deploy to a testnet
+npm run deploy:ignition:sepolia
+npm run deploy:ignition:chiado
+npm run deploy:ignition:baseSepolia
 ```
 
-### Verify on Etherscan
+Ignition deploys all 9 contracts in dependency order:
+- **Batch 1**: ConsentReceipt, DataProvenance, KantaraConsentReceipt, ConsentAuditLog, ConsentProxy, PurposeRegistry
+- **Batch 2**: DataAccessControl, DataDeletion, IntegratedConsentProvenanceSystem
+
+Deployment state is stored in `ignition/deployments/` (gitignored).
+
+### Contract Verification
 
 ```bash
-npx hardhat verify --network sepolia DEPLOYED_CONTRACT_ADDRESS
+# Verify on block explorers after deployment
+npm run verify:sepolia       # Etherscan
+npm run verify:chiado        # Blockscout
+npm run verify:baseSepolia   # Basescan
 ```
 
 ## Contributing

@@ -25,6 +25,17 @@ npx hardhat compile
 npx hardhat test
 npx hardhat node                                     # Start local node
 npx hardhat run scripts/deploy.ts --network localhost
+
+# Hardhat Ignition deployments
+npx hardhat ignition deploy ignition/modules/ConsentSystem.ts --network localhost   # Local
+npx hardhat ignition deploy ignition/modules/ConsentSystem.ts --network sepolia     # Sepolia
+npx hardhat ignition deploy ignition/modules/ConsentSystem.ts --network chiado      # Gnosis Chiado
+npx hardhat ignition deploy ignition/modules/ConsentSystem.ts --network baseSepolia # Base Sepolia
+
+# Contract verification
+npx hardhat ignition verify ConsentSystem --network sepolia
+npx hardhat ignition verify ConsentSystem --network chiado
+npx hardhat ignition verify ConsentSystem --network baseSepolia
 ```
 
 ## Architecture
@@ -57,6 +68,16 @@ The project consists of four Solidity contracts:
 ## Contract Dependencies
 
 IntegratedConsentProvenanceSystem requires deployed ConsentReceipt and DataProvenance addresses at construction.
+
+## Deployment (Hardhat Ignition)
+
+The Ignition module at `ignition/modules/ConsentSystem.ts` deploys all 9 contracts with proper dependency ordering:
+
+- **Tier 1** (no deps): ConsentReceipt, DataProvenance, KantaraConsentReceipt, ConsentAuditLog, ConsentProxy, PurposeRegistry
+- **Tier 2** (needs DataProvenance): DataAccessControl, DataDeletion
+- **Tier 3** (needs ConsentReceipt + DataProvenance): IntegratedConsentProvenanceSystem
+
+**Configured testnets**: Sepolia (chainId 11155111), Gnosis Chiado (10200), Base Sepolia (84532). Copy `.env.example` to `.env` and set `DEPLOYER_PRIVATE_KEY` before deploying.
 
 ## Solidity Version
 

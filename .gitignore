@@ -2,6 +2,8 @@ node_modules/
 cache/
 artifacts/
 typechain-types/
+ignition/deployments/
+deployments.json
 .*/
 # Byte-compiled / optimized / DLL files
 __pycache__/
