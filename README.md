@@ -648,7 +648,7 @@ Supported testnets: **Sepolia**, **Gnosis Chiado**, **Base Sepolia**.
 ```bash
 # 1. Copy .env.example and configure
 cp .env.example .env
-# Edit .env: set DEPLOYER_PRIVATE_KEY and (optionally) RPC URLs / API keys
+# Edit .env: set TESTNET_DEPLOYER_PRIVATE_KEY and (optionally) RPC URLs / API keys
 
 # 2. Deploy to a testnet
 npm run deploy:ignition:sepolia

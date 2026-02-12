@@ -5,8 +5,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const deployerKey = process.env.DEPLOYER_PRIVATE_KEY
-  ? [process.env.DEPLOYER_PRIVATE_KEY]
+const deployerKey = process.env.TESTNET_DEPLOYER_PRIVATE_KEY
+  ? [process.env.TESTNET_DEPLOYER_PRIVATE_KEY]
   : [];
 
 const config: HardhatUserConfig = {

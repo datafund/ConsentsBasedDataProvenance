@@ -77,7 +77,7 @@ The Ignition module at `ignition/modules/ConsentSystem.ts` deploys all 9 contrac
 - **Tier 2** (needs DataProvenance): DataAccessControl, DataDeletion
 - **Tier 3** (needs ConsentReceipt + DataProvenance): IntegratedConsentProvenanceSystem
 
-**Configured testnets**: Sepolia (chainId 11155111), Gnosis Chiado (10200), Base Sepolia (84532). Copy `.env.example` to `.env` and set `DEPLOYER_PRIVATE_KEY` before deploying.
+**Configured testnets**: Sepolia (chainId 11155111), Gnosis Chiado (10200), Base Sepolia (84532). Copy `.env.example` to `.env` and set `TESTNET_DEPLOYER_PRIVATE_KEY` before deploying. This key is for testnets only — mainnet deployments will require a more robust approach (hardware wallet, multisig, or KMS).
 
 ## Solidity Version
 
