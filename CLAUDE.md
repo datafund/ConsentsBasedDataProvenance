@@ -32,10 +32,11 @@ npx hardhat ignition deploy ignition/modules/ConsentSystem.ts --network sepolia 
 npx hardhat ignition deploy ignition/modules/ConsentSystem.ts --network chiado      # Gnosis Chiado
 npx hardhat ignition deploy ignition/modules/ConsentSystem.ts --network baseSepolia # Base Sepolia
 
-# Contract verification
-npx hardhat ignition verify ConsentSystem --network sepolia
-npx hardhat ignition verify ConsentSystem --network chiado
-npx hardhat ignition verify ConsentSystem --network baseSepolia
+# Contract verification (via Blockscout, no API key needed)
+npx hardhat verify --network baseSepolia <CONTRACT_ADDRESS>
+npx hardhat verify --network chiado <CONTRACT_ADDRESS>
+# Sepolia uses Etherscan (requires ETHERSCAN_API_KEY in .env)
+npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
 ```
 
 ## Architecture
@@ -78,6 +79,23 @@ The Ignition module at `ignition/modules/ConsentSystem.ts` deploys all 9 contrac
 - **Tier 3** (needs ConsentReceipt + DataProvenance): IntegratedConsentProvenanceSystem
 
 **Configured testnets**: Sepolia (chainId 11155111), Gnosis Chiado (10200), Base Sepolia (84532). Copy `.env.example` to `.env` and set `TESTNET_DEPLOYER_PRIVATE_KEY` before deploying. This key is for testnets only — mainnet deployments will require a more robust approach (hardware wallet, multisig, or KMS).
+
+A standalone `ignition/modules/DataProvenance.ts` module is also available for deploying just DataProvenance.
+
+## Deployed Contracts
+
+Deployed addresses are tracked in `ignition/deployments/chain-<chainId>/deployed_addresses.json`.
+
+| Network | Chain ID | Explorer |
+|---------|----------|----------|
+| Base Sepolia | 84532 | [Blockscout](https://base-sepolia.blockscout.com) |
+
+## Contract Verification & ABIs
+
+Contracts are verified on Blockscout (no API key needed). Once verified, the ABI is available:
+- **Web UI**: Visit the contract on Blockscout → "Contract" tab → ABI section
+- **API**: `https://base-sepolia.blockscout.com/api?module=contract&action=getabi&address=<ADDRESS>`
+- **Local**: Run `npx hardhat compile`, then find ABIs in `artifacts/contracts/<Name>.sol/<Name>.json`
 
 ## Solidity Version
 

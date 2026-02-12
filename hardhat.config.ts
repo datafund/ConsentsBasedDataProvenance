@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       sepolia: process.env.ETHERSCAN_API_KEY || "",
       chiado: "no-api-key-needed",
-      baseSepolia: process.env.BASESCAN_API_KEY || "",
+      baseSepolia: process.env.BASESCAN_API_KEY || "no-api-key-needed",
     },
     customChains: [
       {
@@ -62,8 +62,8 @@ const config: HardhatUserConfig = {
         network: "baseSepolia",
         chainId: 84532,
         urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org",
+          apiURL: "https://base-sepolia.blockscout.com/api",
+          browserURL: "https://base-sepolia.blockscout.com",
         },
       },
     ],
