@@ -2,7 +2,10 @@ node_modules/
 cache/
 artifacts/
 typechain-types/
-ignition/deployments/
+ignition/deployments/chain-31337/
+ignition/deployments/*/journal.jsonl
+ignition/deployments/*/artifacts/
+ignition/deployments/*/build-info/
 deployments.json
 .*/
 # Byte-compiled / optimized / DLL files
