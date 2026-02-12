@@ -103,10 +103,7 @@ async function main() {
   const imagingHash = dataHashes[2]; // imaging record
   const imagingRecord = records[2];
 
-  // First, mark the data as deleted in DataProvenance
-  await dataProvenance.connect(patient).updateDataStatus(imagingHash, 2); // 2 = Deleted
-
-  // Then request formal deletion with proof
+  // Request formal deletion with proof (also marks as Deleted in DataProvenance)
   await dataDeletion.connect(patient).requestDeletion(
     imagingHash,
     "Patient request - GDPR Article 17 Right to Erasure"
@@ -146,7 +143,6 @@ async function main() {
 
   const prescriptionHash = dataHashes[3];
 
-  await dataProvenance.connect(patient).updateDataStatus(prescriptionHash, 2);
   await dataDeletion.connect(patient).requestDeletion(
     prescriptionHash,
     "Patient request - no longer needed"
