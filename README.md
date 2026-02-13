@@ -528,19 +528,60 @@ test/
 
 **Current Test Count: 281 tests**
 
+## Limits and Bounds
+
+All contracts enforce limits to control gas costs and prevent abuse. These are per-record or per-call — they don't limit the overall system size.
+
+### Per-Record Limits
+
+| Limit | Value | Meaning |
+|-------|-------|---------|
+| `MAX_TRANSFORMATIONS` | 100 | Max transformations branching from a single data record. Each new version is its own record with its own budget, so provenance chains can be arbitrarily deep. |
+| `MAX_ACCESSORS` | 1000 | Max unique addresses recorded as accessors of a single data record. Duplicates are deduplicated automatically. |
+| `MAX_ACCESS_DURATION` | 2 years | Longest access grant via DataAccessControl. |
+| `MAX_DELEGATION_DURATION` | 1 year | Longest consent delegation via ConsentProxy. |
+
+### String Length Limits
+
+| Field | Max Length |
+|-------|-----------|
+| `dataType` | 64 chars |
+| `transformation` | 256 chars |
+| `purpose` (ConsentReceipt) | 256 chars |
+| `policyUrl` (KantaraConsentReceipt) | 512 chars |
+
+### Batch Operation Limits
+
+| Operation | Max Items per Call |
+|-----------|-------------------|
+| `batchRegisterData` | 50 |
+| `batchRecordAccess` | 100 |
+| `batchSetDataStatus` | 50 |
+| `batchGiveConsent` | 50 |
+| `batchRevokeConsent` | 50 |
+| Kantara `batchRevokeConsent` | 50 |
+| Kantara `batchCheckConsent` | 100 |
+| Kantara purposes per receipt | 20 |
+| Kantara PI categories per receipt | 50 |
+
+### What's Not Limited
+
+- **Total records** — no cap on how many data records exist system-wide
+- **Provenance chain depth** — each transformation creates a new record, so chains can go as deep as needed
+- **Total users** — no cap on addresses interacting with the contracts
+- **Contract storage** — grows as needed (each write costs gas, reads are free)
+
 ## Security
 
 ### Security Features
 
 1. **Input Validation**
-   - String length limits (64-512 characters depending on field)
+   - String length limits (see table above)
    - Zero address checks
    - Empty input rejection
 
 2. **Bounded Arrays**
-   - `MAX_TRANSFORMATIONS`: 100 per data record
-   - `MAX_ACCESSORS`: 1000 per data record
-   - Batch limits: 50-100 items per operation
+   - All per-record and batch limits enforced (see table above)
 
 3. **Access Control**
    - Role-Based Access Control (RBAC) for administrative functions

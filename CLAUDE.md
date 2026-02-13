@@ -105,10 +105,14 @@ ABIs are available from multiple sources:
 
 All contracts use `pragma solidity 0.8.20`.
 
+## Limits and Bounds
+
+Per-record: `MAX_TRANSFORMATIONS` = 100 (per record, chains are unbounded), `MAX_ACCESSORS` = 1000, `MAX_ACCESS_DURATION` = 2 years, `MAX_DELEGATION_DURATION` = 1 year. Strings: `dataType` 64, `transformation` 256, `purpose` 256, `policyUrl` 512. Batch ops: 50-100 items per call. No limit on total records, chain depth, or users. See README.md for full table.
+
 ## Key Security Features
 
 - Input validation on all string parameters (length limits)
-- Bounded arrays to prevent DoS (MAX_TRANSFORMATIONS, MAX_ACCESSORS)
+- Bounded arrays to prevent DoS (see limits above)
 - Accessor deduplication to prevent storage bloat
 - Nonce-based receipt ID generation (KantaraConsentReceipt)
 - Constructor address validation
