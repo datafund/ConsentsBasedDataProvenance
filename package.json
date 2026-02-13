@@ -50,6 +50,7 @@
     "example:integration:backend": "hardhat run examples/09-integration-patterns/02-backend-service.ts --network localhost",
     "example:integration:workflow": "hardhat run examples/09-integration-patterns/03-multi-contract-workflow.ts --network localhost",
     "example:integration:errors": "hardhat run examples/09-integration-patterns/04-error-handling.ts --network localhost",
+    "example:swarm:anchor": "hardhat run examples/10-swarm/01-anchor-swarm-hash.ts --network localhost",
     "post-deploy": "hardhat run scripts/post-deploy.ts",
     "deploy:ignition:local": "hardhat ignition deploy ignition/modules/ConsentSystem.ts --network localhost && npm run post-deploy",
     "deploy:ignition:sepolia": "hardhat ignition deploy ignition/modules/ConsentSystem.ts --network sepolia && npm run post-deploy",
