@@ -528,19 +528,60 @@ test/
 
 **Current Test Count: 281 tests**
 
+## Limits and Bounds
+
+All contracts enforce limits to control gas costs and prevent abuse. These are per-record or per-call — they don't limit the overall system size.
+
+### Per-Record Limits
+
+| Limit | Value | Meaning |
+|-------|-------|---------|
+| `MAX_TRANSFORMATIONS` | 100 | Max transformations branching from a single data record. Each new version is its own record with its own budget, so provenance chains can be arbitrarily deep. |
+| `MAX_ACCESSORS` | 1000 | Max unique addresses recorded as accessors of a single data record. Duplicates are deduplicated automatically. |
+| `MAX_ACCESS_DURATION` | 2 years | Longest access grant via DataAccessControl. |
+| `MAX_DELEGATION_DURATION` | 1 year | Longest consent delegation via ConsentProxy. |
+
+### String Length Limits
+
+| Field | Max Length |
+|-------|-----------|
+| `dataType` | 64 chars |
+| `transformation` | 256 chars |
+| `purpose` (ConsentReceipt) | 256 chars |
+| `policyUrl` (KantaraConsentReceipt) | 512 chars |
+
+### Batch Operation Limits
+
+| Operation | Max Items per Call |
+|-----------|-------------------|
+| `batchRegisterData` | 50 |
+| `batchRecordAccess` | 100 |
+| `batchSetDataStatus` | 50 |
+| `batchGiveConsent` | 50 |
+| `batchRevokeConsent` | 50 |
+| Kantara `batchRevokeConsent` | 50 |
+| Kantara `batchCheckConsent` | 100 |
+| Kantara purposes per receipt | 20 |
+| Kantara PI categories per receipt | 50 |
+
+### What's Not Limited
+
+- **Total records** — no cap on how many data records exist system-wide
+- **Provenance chain depth** — each transformation creates a new record, so chains can go as deep as needed
+- **Total users** — no cap on addresses interacting with the contracts
+- **Contract storage** — grows as needed (each write costs gas, reads are free)
+
 ## Security
 
 ### Security Features
 
 1. **Input Validation**
-   - String length limits (64-512 characters depending on field)
+   - String length limits (see table above)
    - Zero address checks
    - Empty input rejection
 
 2. **Bounded Arrays**
-   - `MAX_TRANSFORMATIONS`: 100 per data record
-   - `MAX_ACCESSORS`: 1000 per data record
-   - Batch limits: 50-100 items per operation
+   - All per-record and batch limits enforced (see table above)
 
 3. **Access Control**
    - Role-Based Access Control (RBAC) for administrative functions
@@ -633,21 +674,60 @@ event ConsentUpdated(bytes32 indexed receiptId, address indexed dataSubject);
 ### Local Deployment
 
 ```bash
-npx hardhat run scripts/deploy.ts --network localhost
+# Legacy deploy script
+npm run deploy:local
+
+# Hardhat Ignition (deploys all 9 contracts with dependency ordering)
+npm run node                        # Start local node in another terminal
+npm run deploy:ignition:local
 ```
 
 ### Testnet Deployment
 
-```bash
-# Configure network in hardhat.config.ts first
-npx hardhat run scripts/deploy.ts --network sepolia
-```
-
-### Verify on Etherscan
+Supported testnets: **Sepolia**, **Gnosis Chiado**, **Base Sepolia**.
 
 ```bash
-npx hardhat verify --network sepolia DEPLOYED_CONTRACT_ADDRESS
+# 1. Copy .env.example and configure
+cp .env.example .env
+# Edit .env: set TESTNET_DEPLOYER_PRIVATE_KEY and (optionally) RPC URLs / API keys
+
+# 2. Deploy to a testnet
+npm run deploy:ignition:sepolia
+npm run deploy:ignition:chiado
+npm run deploy:ignition:baseSepolia
 ```
+
+Ignition deploys all 9 contracts in dependency order:
+- **Batch 1**: ConsentReceipt, DataProvenance, KantaraConsentReceipt, ConsentAuditLog, ConsentProxy, PurposeRegistry
+- **Batch 2**: DataAccessControl, DataDeletion, IntegratedConsentProvenanceSystem
+
+Deployed addresses are saved to `ignition/deployments/chain-<chainId>/deployed_addresses.json` and a human-readable summary is auto-generated at [`deployments.md`](deployments.md).
+
+### Contract Verification
+
+Contracts can be verified on Blockscout (no API key needed) — verification is manual, not automatic. Base Sepolia and Chiado use Blockscout. Sepolia uses Etherscan (requires `ETHERSCAN_API_KEY`).
+
+```bash
+# Verify individual contracts on Blockscout (no API key needed)
+npx hardhat verify --network baseSepolia <CONTRACT_ADDRESS>
+npx hardhat verify --network chiado <CONTRACT_ADDRESS>
+
+# Verify on Etherscan (requires ETHERSCAN_API_KEY in .env)
+npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
+```
+
+### Deployed Contracts
+
+| Network | Contract | Address | Explorer |
+|---------|----------|---------|----------|
+| Base Sepolia | DataProvenance | `0x9a3c6F47B69211F05891CCb7aD33596290b9fE64` | [Blockscout](https://base-sepolia.blockscout.com/address/0x9a3c6F47B69211F05891CCb7aD33596290b9fE64#code) |
+
+### ABIs
+
+ABIs are available from multiple sources:
+- **`dist/abis/<ContractName>.json`** — ABI-only JSON files, auto-generated after each deployment (`npm run post-deploy`)
+- **Blockscout** (verified contracts only): Contract page → "Contract" tab → ABI section, or API: `https://base-sepolia.blockscout.com/api?module=contract&action=getabi&address=<ADDRESS>`
+- **Local build**: Run `npx hardhat compile`, full artifacts in `artifacts/contracts/<Name>.sol/<Name>.json`
 
 ## Contributing
 

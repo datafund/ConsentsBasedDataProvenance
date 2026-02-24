@@ -2,6 +2,12 @@ node_modules/
 cache/
 artifacts/
 typechain-types/
+ignition/deployments/chain-31337/
+ignition/deployments/*/journal.jsonl
+ignition/deployments/*/artifacts/
+ignition/deployments/*/build-info/
+dist/*
+!dist/abis/
 .*/
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -15,7 +21,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
