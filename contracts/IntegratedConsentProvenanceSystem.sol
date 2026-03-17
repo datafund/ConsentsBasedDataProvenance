@@ -38,6 +38,12 @@ contract IntegratedConsentProvenanceSystem {
         string transformation,
         string consentPurpose
     );
+    event DataMergedWithConsent(
+        bytes32 indexed newDataHash,
+        bytes32[] sourceDataHashes,
+        string transformation,
+        string consentPurpose
+    );
     event ConsentRevokedWithDataRestriction(
         address indexed user,
         uint256 consentIndex,
@@ -141,6 +147,36 @@ contract IntegratedConsentProvenanceSystem {
         emit DataTransformedWithConsent(
             _originalDataHash,
             _newDataHash,
+            _transformation,
+            _consentPurpose
+        );
+    }
+
+    /// @notice Merge multiple data sources with consent verification
+    /// @param _sourceDataHashes Array of source data hashes
+    /// @param _newDataHash Hash of the merged output data
+    /// @param _transformation Description of the merge transformation
+    /// @param _newDataType Data type for the merged output
+    /// @param _consentPurpose Purpose that must have valid consent
+    function mergeDataWithConsent(
+        bytes32[] memory _sourceDataHashes,
+        bytes32 _newDataHash,
+        string memory _transformation,
+        string memory _newDataType,
+        string memory _consentPurpose
+    ) public {
+        require(
+            consentContract.getConsentStatus(msg.sender, _consentPurpose),
+            "No valid consent for this purpose"
+        );
+
+        provenanceContract.recordMergeTransformation(_sourceDataHashes, _newDataHash, _transformation, _newDataType);
+        dataConsentPurpose[_newDataHash] = _consentPurpose;
+        userRegisteredData[msg.sender].push(_newDataHash);
+
+        emit DataMergedWithConsent(
+            _newDataHash,
+            _sourceDataHashes,
             _transformation,
             _consentPurpose
         );
