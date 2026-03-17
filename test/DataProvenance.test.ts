@@ -87,12 +87,21 @@ describe("DataProvenance", function () {
         .withArgs(DATA_HASH_1, DATA_HASH_2, "anonymized");
     });
 
-    it("should add transformation to original record", async function () {
+    it("should add transformation link to original record", async function () {
       await dataProvenance.connect(user1).recordTransformation(DATA_HASH_1, DATA_HASH_2, "anonymized");
 
       const originalRecord = await dataProvenance.getDataRecord(DATA_HASH_1);
-      expect(originalRecord.transformations.length).to.equal(1);
-      expect(originalRecord.transformations[0]).to.equal("anonymized");
+      expect(originalRecord.transformationLinks.length).to.equal(1);
+      expect(originalRecord.transformationLinks[0].newDataHash).to.equal(DATA_HASH_2);
+      expect(originalRecord.transformationLinks[0].description).to.equal("anonymized");
+    });
+
+    it("should set transformation parents for reverse lookup", async function () {
+      await dataProvenance.connect(user1).recordTransformation(DATA_HASH_1, DATA_HASH_2, "anonymized");
+
+      const parents = await dataProvenance.getTransformationParents(DATA_HASH_2);
+      expect(parents.length).to.equal(1);
+      expect(parents[0]).to.equal(DATA_HASH_1);
     });
 
     it("should create new data record for transformed data", async function () {
@@ -123,8 +132,40 @@ describe("DataProvenance", function () {
       await dataProvenance.connect(user1).recordTransformation(DATA_HASH_2, DATA_HASH_3, "aggregated");
 
       const record2 = await dataProvenance.getDataRecord(DATA_HASH_2);
-      expect(record2.transformations.length).to.equal(1);
-      expect(record2.transformations[0]).to.equal("aggregated");
+      expect(record2.transformationLinks.length).to.equal(1);
+      expect(record2.transformationLinks[0].newDataHash).to.equal(DATA_HASH_3);
+      expect(record2.transformationLinks[0].description).to.equal("aggregated");
+
+      // Verify parent chain: DATA_HASH_3 → DATA_HASH_2 → DATA_HASH_1
+      const parents3 = await dataProvenance.getTransformationParents(DATA_HASH_3);
+      expect(parents3.length).to.equal(1);
+      expect(parents3[0]).to.equal(DATA_HASH_2);
+
+      const parents2 = await dataProvenance.getTransformationParents(DATA_HASH_2);
+      expect(parents2.length).to.equal(1);
+      expect(parents2[0]).to.equal(DATA_HASH_1);
+    });
+
+    it("should return transformation links via getTransformationLinks", async function () {
+      await dataProvenance.connect(user1).recordTransformation(DATA_HASH_1, DATA_HASH_2, "anonymized");
+
+      const links = await dataProvenance.getTransformationLinks(DATA_HASH_1);
+      expect(links.length).to.equal(1);
+      expect(links[0].newDataHash).to.equal(DATA_HASH_2);
+      expect(links[0].description).to.equal("anonymized");
+    });
+
+    it("should return child hashes via getChildHashes", async function () {
+      await dataProvenance.connect(user1).recordTransformation(DATA_HASH_1, DATA_HASH_2, "anonymized");
+
+      const children = await dataProvenance.getChildHashes(DATA_HASH_1);
+      expect(children.length).to.equal(1);
+      expect(children[0]).to.equal(DATA_HASH_2);
+    });
+
+    it("should return empty parents for root data", async function () {
+      const parents = await dataProvenance.getTransformationParents(DATA_HASH_1);
+      expect(parents.length).to.equal(0);
     });
 
     it("should revert for empty transformation", async function () {
@@ -191,6 +232,209 @@ describe("DataProvenance", function () {
       await dataProvenance.connect(user2).recordAccess(DATA_HASH_1);
 
       expect(await dataProvenance.hasAddressAccessed(DATA_HASH_1, user2.address)).to.be.true;
+    });
+  });
+
+  describe("recordMergeTransformation", function () {
+    const DATA_HASH_4 = ethers.keccak256(ethers.toUtf8Bytes("data4"));
+
+    beforeEach(async function () {
+      await dataProvenance.connect(user1).registerData(DATA_HASH_1, "personal");
+      await dataProvenance.connect(user1).registerData(DATA_HASH_2, "financial");
+    });
+
+    it("should merge two sources into a new record", async function () {
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1, DATA_HASH_2],
+          DATA_HASH_3,
+          "joined datasets",
+          "combined"
+        )
+      )
+        .to.emit(dataProvenance, "DataMerged")
+        .withArgs(DATA_HASH_3, [DATA_HASH_1, DATA_HASH_2], "joined datasets");
+    });
+
+    it("should create new record with specified data type", async function () {
+      await dataProvenance.connect(user1).recordMergeTransformation(
+        [DATA_HASH_1, DATA_HASH_2],
+        DATA_HASH_3,
+        "joined datasets",
+        "combined"
+      );
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_3);
+      expect(record.owner).to.equal(user1.address);
+      expect(record.dataType).to.equal("combined");
+      expect(record.status).to.equal(0); // Active
+    });
+
+    it("should add forward links from each source", async function () {
+      await dataProvenance.connect(user1).recordMergeTransformation(
+        [DATA_HASH_1, DATA_HASH_2],
+        DATA_HASH_3,
+        "joined datasets",
+        "combined"
+      );
+
+      const links1 = await dataProvenance.getTransformationLinks(DATA_HASH_1);
+      expect(links1.length).to.equal(1);
+      expect(links1[0].newDataHash).to.equal(DATA_HASH_3);
+
+      const links2 = await dataProvenance.getTransformationLinks(DATA_HASH_2);
+      expect(links2.length).to.equal(1);
+      expect(links2[0].newDataHash).to.equal(DATA_HASH_3);
+    });
+
+    it("should set multiple parents for reverse lookup", async function () {
+      await dataProvenance.connect(user1).recordMergeTransformation(
+        [DATA_HASH_1, DATA_HASH_2],
+        DATA_HASH_3,
+        "joined datasets",
+        "combined"
+      );
+
+      const parents = await dataProvenance.getTransformationParents(DATA_HASH_3);
+      expect(parents.length).to.equal(2);
+      expect(parents[0]).to.equal(DATA_HASH_1);
+      expect(parents[1]).to.equal(DATA_HASH_2);
+    });
+
+    it("should support merge with more than 2 sources", async function () {
+      await dataProvenance.connect(user1).registerData(DATA_HASH_3, "medical");
+
+      await dataProvenance.connect(user1).recordMergeTransformation(
+        [DATA_HASH_1, DATA_HASH_2, DATA_HASH_3],
+        DATA_HASH_4,
+        "three-way merge",
+        "aggregate"
+      );
+
+      const parents = await dataProvenance.getTransformationParents(DATA_HASH_4);
+      expect(parents.length).to.equal(3);
+
+      // Each source should have a forward link
+      for (const hash of [DATA_HASH_1, DATA_HASH_2, DATA_HASH_3]) {
+        const children = await dataProvenance.getChildHashes(hash);
+        expect(children).to.include(DATA_HASH_4);
+      }
+    });
+
+    it("should revert with fewer than 2 sources", async function () {
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1],
+          DATA_HASH_3,
+          "not a merge",
+          "combined"
+        )
+      ).to.be.revertedWith("Merge requires at least 2 sources");
+    });
+
+    it("should revert with empty sources", async function () {
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [],
+          DATA_HASH_3,
+          "not a merge",
+          "combined"
+        )
+      ).to.be.revertedWith("Merge requires at least 2 sources");
+    });
+
+    it("should revert when caller does not own all sources", async function () {
+      await dataProvenance.connect(user2).registerData(DATA_HASH_3, "other");
+
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1, DATA_HASH_3],
+          DATA_HASH_4,
+          "merge",
+          "combined"
+        )
+      ).to.be.revertedWith("Not the owner of source data");
+    });
+
+    it("should revert when a source is not active", async function () {
+      await dataProvenance.connect(user1).setDataStatus(DATA_HASH_2, 1); // Restricted
+
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1, DATA_HASH_2],
+          DATA_HASH_3,
+          "merge",
+          "combined"
+        )
+      ).to.be.revertedWith("Source data is not active");
+    });
+
+    it("should revert when new hash already exists", async function () {
+      await dataProvenance.connect(user1).registerData(DATA_HASH_3, "existing");
+
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1, DATA_HASH_2],
+          DATA_HASH_3,
+          "merge",
+          "combined"
+        )
+      ).to.be.revertedWith("New data hash already exists");
+    });
+
+    it("should revert with duplicate source hashes", async function () {
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1, DATA_HASH_1],
+          DATA_HASH_3,
+          "merge",
+          "combined"
+        )
+      ).to.be.revertedWith("Duplicate source hash");
+    });
+
+    it("should revert with empty transformation description", async function () {
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1, DATA_HASH_2],
+          DATA_HASH_3,
+          "",
+          "combined"
+        )
+      ).to.be.revertedWith("Transformation cannot be empty");
+    });
+
+    it("should revert with empty data type", async function () {
+      await expect(
+        dataProvenance.connect(user1).recordMergeTransformation(
+          [DATA_HASH_1, DATA_HASH_2],
+          DATA_HASH_3,
+          "merge",
+          ""
+        )
+      ).to.be.revertedWith("Data type cannot be empty");
+    });
+
+    it("should allow chaining: merge then transform", async function () {
+      // Merge DATA_HASH_1 + DATA_HASH_2 → DATA_HASH_3
+      await dataProvenance.connect(user1).recordMergeTransformation(
+        [DATA_HASH_1, DATA_HASH_2],
+        DATA_HASH_3,
+        "joined",
+        "combined"
+      );
+
+      // Then transform DATA_HASH_3 → DATA_HASH_4
+      await dataProvenance.connect(user1).recordTransformation(DATA_HASH_3, DATA_HASH_4, "anonymized");
+
+      // DATA_HASH_4 has single parent DATA_HASH_3
+      const parents4 = await dataProvenance.getTransformationParents(DATA_HASH_4);
+      expect(parents4.length).to.equal(1);
+      expect(parents4[0]).to.equal(DATA_HASH_3);
+
+      // DATA_HASH_3 has two parents from the merge
+      const parents3 = await dataProvenance.getTransformationParents(DATA_HASH_3);
+      expect(parents3.length).to.equal(2);
     });
   });
 
