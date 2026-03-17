@@ -197,8 +197,8 @@ async function main() {
     console.log(`    │  Owner: ${record.owner.slice(0, 10)}...`);
     console.log(`    │  Status: ${statusMap[record.status]}`);
 
-    if (record.transformations.length > 0) {
-      console.log(`    │  Transform: ${record.transformations[0]}`);
+    if (record.transformationLinks.length > 0) {
+      console.log(`    │  Transform: ${record.transformationLinks[0].description}`);
     }
 
     if (i < dataChain.length - 1) {

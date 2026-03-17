@@ -125,9 +125,9 @@ async function main() {
 
   console.log("\n    Original Data:");
   console.log(`      Type: ${originalRecord.dataType}`);
-  console.log(`      Transformations: ${originalRecord.transformations.length}`);
-  if (originalRecord.transformations.length > 0) {
-    console.log(`      Last transform: ${originalRecord.transformations[0]}`);
+  console.log(`      Transformations: ${originalRecord.transformationLinks.length}`);
+  if (originalRecord.transformationLinks.length > 0) {
+    console.log(`      Last transform: ${originalRecord.transformationLinks[0].description}`);
   }
 
   console.log("\n    Anonymized Data:");

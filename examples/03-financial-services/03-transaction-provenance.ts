@@ -211,8 +211,8 @@ async function main() {
     console.log(`    │  Owner: ${record.owner.slice(0, 10)}...`);
     console.log(`    │  Status: ${statusMap[record.status]}`);
 
-    if (record.transformations.length > 0) {
-      console.log(`    │  Transformation: ${record.transformations[0]}`);
+    if (record.transformationLinks.length > 0) {
+      console.log(`    │  Transformation: ${record.transformationLinks[0].description}`);
     }
 
     if (i < dataHashes.length - 1) {
@@ -241,10 +241,10 @@ async function main() {
 
   for (let i = 0; i < dataHashes.length; i++) {
     const record = await dataProvenance.getDataRecord(dataHashes[i].hash);
-    if (record.transformations.length > 0) {
-      const transform = record.transformations[0].length > 40
-        ? record.transformations[0].slice(0, 40) + "..."
-        : record.transformations[0];
+    if (record.transformationLinks.length > 0) {
+      const transform = record.transformationLinks[0].description.length > 40
+        ? record.transformationLinks[0].description.slice(0, 40) + "..."
+        : record.transformationLinks[0].description;
       console.log(`    │  ${i + 1}. ${transform}`);
     } else {
       console.log(`    │  ${i + 1}. [Initial record]`);

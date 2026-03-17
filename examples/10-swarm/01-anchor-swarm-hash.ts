@@ -66,7 +66,7 @@
  *     │      |       --transform-->  [aggregated]            │
  *     │      |                                               │
  *     │  Each node: hash, owner, timestamp, status,          │
- *     │             accessors[], transformations[]            │
+ *     │             accessors[], transformationLinks[]         │
  *     └─────────────────────────────────────────────────────┘
  *
  * Run with:

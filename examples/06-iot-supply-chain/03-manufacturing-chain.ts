@@ -234,8 +234,8 @@ async function main() {
     console.log(`    │  Owner: ${stage.owner}`);
     console.log(`    │  Type: ${record.dataType}`);
 
-    if (record.transformations.length > 0) {
-      console.log(`    │  Transform: ${record.transformations[0].slice(0, 45)}...`);
+    if (record.transformationLinks.length > 0) {
+      console.log(`    │  Transform: ${record.transformationLinks[0].description.slice(0, 45)}...`);
     }
 
     if (i < stages.length - 1) {
