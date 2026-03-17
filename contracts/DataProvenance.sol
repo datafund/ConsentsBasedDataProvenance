@@ -5,6 +5,7 @@ contract DataProvenance {
     // Security: Maximum limits to prevent unbounded growth
     uint256 public constant MAX_TRANSFORMATIONS = 100;
     uint256 public constant MAX_ACCESSORS = 1000;
+    uint256 public constant MAX_MERGE_SOURCES = 50;
 
     // RBAC: Role definitions
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -17,17 +18,25 @@ contract DataProvenance {
         Deleted
     }
 
+    struct TransformationLink {
+        bytes32 newDataHash;
+        string description;
+    }
+
     struct DataRecord {
         bytes32 dataHash;
         address owner;
         uint256 timestamp;
         string dataType;
-        string[] transformations;
+        TransformationLink[] transformationLinks;
         address[] accessors;
         DataStatus status;
     }
 
     mapping(bytes32 => DataRecord) public dataRecords;
+    // Reverse lookup: child hash → parent hash(es) for lineage traversal
+    // Array to support both single-parent transforms and multi-parent merges
+    mapping(bytes32 => bytes32[]) private transformationParents;
     mapping(address => bytes32[]) public userDataRecords;
     // Security: Track if address has already accessed data (prevent duplicates)
     mapping(bytes32 => mapping(address => bool)) private hasAccessed;
@@ -45,6 +54,7 @@ contract DataProvenance {
     event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
     event DataTransformed(bytes32 indexed originalDataHash, bytes32 indexed newDataHash, string transformation);
     event DataAccessed(bytes32 indexed dataHash, address indexed accessor);
+    event DataMerged(bytes32 indexed newDataHash, bytes32[] sourceDataHashes, string transformation);
     event DataStatusChanged(bytes32 indexed dataHash, DataStatus oldStatus, DataStatus newStatus);
     event DataOwnershipTransferred(bytes32 indexed dataHash, address indexed previousOwner, address indexed newOwner);
 
@@ -230,8 +240,11 @@ contract DataProvenance {
 
         DataRecord storage originalRecord = dataRecords[_originalDataHash];
         // Security: Prevent unbounded array growth
-        require(originalRecord.transformations.length < MAX_TRANSFORMATIONS, "Max transformations reached");
-        originalRecord.transformations.push(_transformation);
+        require(originalRecord.transformationLinks.length < MAX_TRANSFORMATIONS, "Max transformations reached");
+        originalRecord.transformationLinks.push(TransformationLink(_newDataHash, _transformation));
+
+        // Reverse lookup for lineage traversal
+        transformationParents[_newDataHash].push(_originalDataHash);
 
         DataRecord storage newRecord = dataRecords[_newDataHash];
         newRecord.dataHash = _newDataHash;
@@ -243,6 +256,62 @@ contract DataProvenance {
         userDataRecords[msg.sender].push(_newDataHash);
 
         emit DataTransformed(_originalDataHash, _newDataHash, _transformation);
+    }
+
+    /// @notice Record a merge/join transformation combining multiple source datasets
+    /// @param _sourceDataHashes Array of source data hashes (caller must own all)
+    /// @param _newDataHash Hash of the merged output data
+    /// @param _transformation Description of the merge transformation
+    /// @param _newDataType Data type for the merged output
+    function recordMergeTransformation(
+        bytes32[] memory _sourceDataHashes,
+        bytes32 _newDataHash,
+        string memory _transformation,
+        string memory _newDataType
+    ) public {
+        require(_sourceDataHashes.length >= 2, "Merge requires at least 2 sources");
+        require(_sourceDataHashes.length <= MAX_MERGE_SOURCES, "Too many merge sources");
+        require(dataRecords[_newDataHash].owner == address(0), "New data hash already exists");
+        require(bytes(_transformation).length > 0, "Transformation cannot be empty");
+        require(bytes(_transformation).length <= 256, "Transformation too long");
+        require(bytes(_newDataType).length > 0, "Data type cannot be empty");
+        require(bytes(_newDataType).length <= 64, "Data type too long");
+
+        // Validate all sources: caller must own each, each must be active
+        for (uint256 i = 0; i < _sourceDataHashes.length; i++) {
+            require(_sourceDataHashes[i] != bytes32(0), "Invalid source hash");
+            DataRecord storage sourceRecord = dataRecords[_sourceDataHashes[i]];
+            require(sourceRecord.owner == msg.sender, "Not the owner of source data");
+            require(sourceRecord.status == DataStatus.Active, "Source data is not active");
+            require(sourceRecord.transformationLinks.length < MAX_TRANSFORMATIONS, "Max transformations reached");
+
+            // Check for duplicate source hashes
+            for (uint256 j = 0; j < i; j++) {
+                require(_sourceDataHashes[i] != _sourceDataHashes[j], "Duplicate source hash");
+            }
+        }
+
+        // Add forward links from each source to the new hash
+        for (uint256 i = 0; i < _sourceDataHashes.length; i++) {
+            dataRecords[_sourceDataHashes[i]].transformationLinks.push(
+                TransformationLink(_newDataHash, _transformation)
+            );
+        }
+
+        // Set reverse lookup: new hash → all source parents
+        transformationParents[_newDataHash] = _sourceDataHashes;
+
+        // Create the merged data record
+        DataRecord storage newRecord = dataRecords[_newDataHash];
+        newRecord.dataHash = _newDataHash;
+        newRecord.owner = msg.sender;
+        newRecord.timestamp = block.timestamp;
+        newRecord.dataType = _newDataType;
+        newRecord.status = DataStatus.Active;
+
+        userDataRecords[msg.sender].push(_newDataHash);
+
+        emit DataMerged(_newDataHash, _sourceDataHashes, _transformation);
     }
 
     /// @notice Record access to data
@@ -349,6 +418,35 @@ contract DataProvenance {
     /// @return uint256 Count
     function getUserDataRecordsCount(address _user) public view returns (uint256) {
         return userDataRecords[_user].length;
+    }
+
+    // ============ Transformation Lineage ============
+
+    /// @notice Get transformation links for a data record (forward traversal)
+    /// @param _dataHash Hash of data
+    /// @return TransformationLink[] Array of transformation links
+    function getTransformationLinks(bytes32 _dataHash) public view returns (TransformationLink[] memory) {
+        return dataRecords[_dataHash].transformationLinks;
+    }
+
+    /// @notice Get only the child hashes derived from a data record (lightweight forward traversal)
+    /// @param _dataHash Hash of data
+    /// @return bytes32[] Array of child data hashes
+    function getChildHashes(bytes32 _dataHash) public view returns (bytes32[] memory) {
+        TransformationLink[] storage links = dataRecords[_dataHash].transformationLinks;
+        bytes32[] memory children = new bytes32[](links.length);
+        for (uint256 i = 0; i < links.length; i++) {
+            children[i] = links[i].newDataHash;
+        }
+        return children;
+    }
+
+    /// @notice Get parent hash(es) for a data record (reverse traversal)
+    /// @dev Returns single-element array for regular transforms, multi-element for merges, empty for root data
+    /// @param _dataHash Hash of child data
+    /// @return bytes32[] Array of parent data hashes
+    function getTransformationParents(bytes32 _dataHash) public view returns (bytes32[] memory) {
+        return transformationParents[_dataHash];
     }
 
     // ============ Batch Operations ============
