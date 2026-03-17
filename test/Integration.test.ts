@@ -71,8 +71,9 @@ describe("Integration Tests", function () {
 
       // Verify transformation recorded
       const originalRecord = await dataProvenance.getDataRecord(DATA_HASH_1);
-      expect(originalRecord.transformations.length).to.equal(1);
-      expect(originalRecord.transformations[0]).to.equal("anonymized");
+      expect(originalRecord.transformationLinks.length).to.equal(1);
+      expect(originalRecord.transformationLinks[0].newDataHash).to.equal(DATA_HASH_2);
+      expect(originalRecord.transformationLinks[0].description).to.equal("anonymized");
 
       // Verify new data record created (owner is IntegratedSystem contract)
       const record2 = await dataProvenance.getDataRecord(DATA_HASH_2);
@@ -110,17 +111,25 @@ describe("Integration Tests", function () {
       const userRecords = await integratedSystem.getUserRegisteredData(dataSubject.address);
       expect(userRecords.length).to.equal(3);
 
-      // Original has one transformation
+      // Original has one transformation linking to DATA_HASH_2
       const original = await dataProvenance.getDataRecord(DATA_HASH_1);
-      expect(original.transformations[0]).to.equal("pseudonymized");
+      expect(original.transformationLinks[0].newDataHash).to.equal(DATA_HASH_2);
+      expect(original.transformationLinks[0].description).to.equal("pseudonymized");
 
-      // Second has one transformation
+      // Second has one transformation linking to DATA_HASH_3
       const second = await dataProvenance.getDataRecord(DATA_HASH_2);
-      expect(second.transformations[0]).to.equal("aggregated");
+      expect(second.transformationLinks[0].newDataHash).to.equal(DATA_HASH_3);
+      expect(second.transformationLinks[0].description).to.equal("aggregated");
 
       // Third has no transformations yet
       const third = await dataProvenance.getDataRecord(DATA_HASH_3);
-      expect(third.transformations.length).to.equal(0);
+      expect(third.transformationLinks.length).to.equal(0);
+
+      // Verify reverse traversal via getTransformationParents
+      const parents3 = await dataProvenance.getTransformationParents(DATA_HASH_3);
+      expect(parents3[0]).to.equal(DATA_HASH_2);
+      const parents2 = await dataProvenance.getTransformationParents(DATA_HASH_2);
+      expect(parents2[0]).to.equal(DATA_HASH_1);
     });
   });
 
