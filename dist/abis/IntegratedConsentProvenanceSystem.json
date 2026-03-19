@@ -1,0 +1,448 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_consentContractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_provenanceContractAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "consentIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "restrictedDataCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ConsentRevokedWithDataRestriction",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "dataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "accessor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "DataAccessedWithConsent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newDataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32[]",
+        "name": "sourceDataHashes",
+        "type": "bytes32[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "transformation",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "DataMergedWithConsent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "dataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "dataType",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "DataRegisteredWithConsent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "originalDataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newDataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "transformation",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "DataTransformedWithConsent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "dataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "actualOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "delegate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "dataType",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "DelegatedDataRegistered",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "accessDataWithConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "consentContract",
+    "outputs": [
+      {
+        "internalType": "contract ConsentReceipt",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "dataConsentPurpose",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDataConsentPurpose",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getUserRegisteredData",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isDataAccessAllowed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "_sourceDataHashes",
+        "type": "bytes32[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_newDataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_transformation",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_newDataType",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "mergeDataWithConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "provenanceContract",
+    "outputs": [
+      {
+        "internalType": "contract DataProvenance",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_dataType",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_actualOwner",
+        "type": "address"
+      }
+    ],
+    "name": "registerDataForWithConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_dataType",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "registerDataWithConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "restrictDataForPurpose",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_originalDataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_newDataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_transformation",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
+      }
+    ],
+    "name": "transformDataWithConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

@@ -1,0 +1,370 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "receiptId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "dataSubject",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "dataController",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "expiryTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "ConsentGiven",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "receiptId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "dataSubject",
+        "type": "address"
+      }
+    ],
+    "name": "ConsentRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "receiptId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "dataSubject",
+        "type": "address"
+      }
+    ],
+    "name": "ConsentUpdated",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "_receiptIds",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "batchIsConsentValid",
+    "outputs": [
+      {
+        "internalType": "bool[]",
+        "name": "",
+        "type": "bool[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "_receiptIds",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "batchRevokeConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_receiptId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getConsentReceipt",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "receiptId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "dataSubject",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "dataController",
+            "type": "address"
+          },
+          {
+            "internalType": "enum KantaraConsentReceipt.Purpose[]",
+            "name": "purposes",
+            "type": "uint8[]"
+          },
+          {
+            "internalType": "bytes32[]",
+            "name": "piCategories",
+            "type": "bytes32[]"
+          },
+          {
+            "internalType": "enum KantaraConsentReceipt.ConsentType",
+            "name": "consentType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "expiryTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "thirdPartyDisclosure",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "policyUrl",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct KantaraConsentReceipt.ConsentReceipt",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getUserNonce",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getUserReceipts",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getUserReceiptsCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_offset",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getUserReceiptsPaginated",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dataController",
+        "type": "address"
+      },
+      {
+        "internalType": "enum KantaraConsentReceipt.Purpose[]",
+        "name": "_purposes",
+        "type": "uint8[]"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "_piCategories",
+        "type": "bytes32[]"
+      },
+      {
+        "internalType": "enum KantaraConsentReceipt.ConsentType",
+        "name": "_consentType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expiryTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_thirdPartyDisclosure",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "_policyUrl",
+        "type": "string"
+      }
+    ],
+    "name": "giveConsent",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dataSubject",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_dataController",
+        "type": "address"
+      },
+      {
+        "internalType": "enum KantaraConsentReceipt.Purpose",
+        "name": "_purpose",
+        "type": "uint8"
+      }
+    ],
+    "name": "hasValidConsent",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_receiptId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isConsentValid",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_receiptId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "revokeConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

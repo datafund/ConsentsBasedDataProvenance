@@ -1,0 +1,428 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_provenanceContract",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "dataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "grantee",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum DataAccessControl.AccessLevel",
+        "name": "level",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "validUntil",
+        "type": "uint256"
+      }
+    ],
+    "name": "AccessGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "dataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "grantee",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum DataAccessControl.AccessLevel",
+        "name": "oldLevel",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum DataAccessControl.AccessLevel",
+        "name": "newLevel",
+        "type": "uint8"
+      }
+    ],
+    "name": "AccessLevelChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "dataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "grantee",
+        "type": "address"
+      }
+    ],
+    "name": "AccessRevoked",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_ACCESS_DURATION",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "accessGrants",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "grantee",
+        "type": "address"
+      },
+      {
+        "internalType": "enum DataAccessControl.AccessLevel",
+        "name": "level",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "validUntil",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "consentReceiptId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_grantee",
+        "type": "address"
+      },
+      {
+        "internalType": "enum DataAccessControl.AccessLevel",
+        "name": "_newLevel",
+        "type": "uint8"
+      }
+    ],
+    "name": "changeAccessLevel",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_accessor",
+        "type": "address"
+      },
+      {
+        "internalType": "enum DataAccessControl.AccessLevel",
+        "name": "_requiredLevel",
+        "type": "uint8"
+      }
+    ],
+    "name": "checkAccess",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "dataGrantees",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_grantee",
+        "type": "address"
+      }
+    ],
+    "name": "getAccessGrant",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "grantee",
+            "type": "address"
+          },
+          {
+            "internalType": "enum DataAccessControl.AccessLevel",
+            "name": "level",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "validUntil",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "consentReceiptId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct DataAccessControl.AccessGrant",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDataGrantees",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getUserAccessibleData",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_grantee",
+        "type": "address"
+      },
+      {
+        "internalType": "enum DataAccessControl.AccessLevel",
+        "name": "_level",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_validUntil",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_consentReceiptId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "grantAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_accessor",
+        "type": "address"
+      }
+    ],
+    "name": "isAccessValid",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "provenanceContract",
+    "outputs": [
+      {
+        "internalType": "contract DataProvenance",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_grantee",
+        "type": "address"
+      }
+    ],
+    "name": "revokeAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "userAccessibleData",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

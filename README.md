@@ -749,9 +749,25 @@ npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
 
 ### Deployed Contracts
 
+See [`deployments.md`](deployments.md) for the auto-generated reference. Summary:
+
 | Network | Contract | Address | Explorer |
 |---------|----------|---------|----------|
-| Base Sepolia | DataProvenance | `0x9a3c6F47B69211F05891CCb7aD33596290b9fE64` | [Blockscout](https://base-sepolia.blockscout.com/address/0x9a3c6F47B69211F05891CCb7aD33596290b9fE64#code) |
+| Base Sepolia | ConsentAuditLog | `0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4` | [Blockscout](https://base-sepolia.blockscout.com/address/0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4) |
+| Base Sepolia | ConsentProxy | `0x5B96F9d0b896f4AD9E0fE368259479eF369853FE` | [Blockscout](https://base-sepolia.blockscout.com/address/0x5B96F9d0b896f4AD9E0fE368259479eF369853FE) |
+| Base Sepolia | ConsentReceipt | `0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF` | [Blockscout](https://base-sepolia.blockscout.com/address/0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF) |
+| Base Sepolia | DataProvenance | `0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a` | [Blockscout](https://base-sepolia.blockscout.com/address/0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a) |
+| Base Sepolia | KantaraConsentReceipt | `0x64CC6738E43dc2c6D2E70120f351Bc85f563481C` | [Blockscout](https://base-sepolia.blockscout.com/address/0x64CC6738E43dc2c6D2E70120f351Bc85f563481C) |
+| Base Sepolia | PurposeRegistry | `0x50F132Dc634C80d940b93551D1659B87c82599F1` | [Blockscout](https://base-sepolia.blockscout.com/address/0x50F132Dc634C80d940b93551D1659B87c82599F1) |
+| Base Sepolia | DataAccessControl | `0xe3056301801b11a2dF5c31A9E86f46c9c604414A` | [Blockscout](https://base-sepolia.blockscout.com/address/0xe3056301801b11a2dF5c31A9E86f46c9c604414A) |
+| Base Sepolia | DataDeletion | `0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf` | [Blockscout](https://base-sepolia.blockscout.com/address/0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf) |
+| Base Sepolia | IntegratedConsentProvenanceSystem | `0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7` | [Blockscout](https://base-sepolia.blockscout.com/address/0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7) |
+
+#### Previous Deployments (Superseded)
+
+| Network | Contract | Address | Explorer | Notes |
+|---------|----------|---------|----------|-------|
+| Base Sepolia | DataProvenance (v1) | `0x9a3c6F47B69211F05891CCb7aD33596290b9fE64` | [Blockscout](https://base-sepolia.blockscout.com/address/0x9a3c6F47B69211F05891CCb7aD33596290b9fE64#code) | Pre-TransformationLink struct, standalone deploy |
 
 ### ABIs
 

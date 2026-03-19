@@ -1,0 +1,451 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "entryIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum ConsentAuditLog.AuditAction",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "actor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "subjectId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "AuditRecorded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "recorder",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "authorized",
+        "type": "bool"
+      }
+    ],
+    "name": "RecorderAuthorized",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "actorAuditIndices",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "admin",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "auditLog",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "actor",
+        "type": "address"
+      },
+      {
+        "internalType": "enum ConsentAuditLog.AuditAction",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "subjectId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "relatedId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "metadata",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "authorizedRecorders",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_actor",
+        "type": "address"
+      }
+    ],
+    "name": "getActorAuditCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAuditCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getAuditEntry",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "actor",
+            "type": "address"
+          },
+          {
+            "internalType": "enum ConsentAuditLog.AuditAction",
+            "name": "action",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "subjectId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "relatedId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "metadata",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct ConsentAuditLog.AuditEntry",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_actor",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_offset",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getAuditsByActor",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "actor",
+            "type": "address"
+          },
+          {
+            "internalType": "enum ConsentAuditLog.AuditAction",
+            "name": "action",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "subjectId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "relatedId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "metadata",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct ConsentAuditLog.AuditEntry[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_subjectId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_offset",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getAuditsBySubject",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "actor",
+            "type": "address"
+          },
+          {
+            "internalType": "enum ConsentAuditLog.AuditAction",
+            "name": "action",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "subjectId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "relatedId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "metadata",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct ConsentAuditLog.AuditEntry[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_subjectId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSubjectAuditCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "enum ConsentAuditLog.AuditAction",
+        "name": "_action",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_subjectId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_relatedId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_metadata",
+        "type": "string"
+      }
+    ],
+    "name": "recordAudit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_recorder",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_authorized",
+        "type": "bool"
+      }
+    ],
+    "name": "setAuthorizedRecorder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "subjectAuditIndices",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
