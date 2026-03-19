@@ -227,19 +227,32 @@ function revokeConsent(bytes32 _receiptId) public;
 
 ### DataProvenance
 
-Data lineage tracking with RBAC and delegated ownership.
+Data lineage tracking with RBAC, delegated ownership, and bidirectional lineage traversal.
 
 ```solidity
 // Register data
 function registerData(bytes32 _dataHash, string memory _dataType) public;
 function registerDataFor(bytes32 _dataHash, string memory _dataType, address _actualOwner) public;
 
-// Record data transformation
+// Record data transformation (single source → derived output)
 function recordTransformation(
     bytes32 _originalDataHash,
     bytes32 _newDataHash,
     string memory _transformation
 ) public;
+
+// Record merge/join transformation (multiple sources → single output)
+function recordMergeTransformation(
+    bytes32[] memory _sourceDataHashes,
+    bytes32 _newDataHash,
+    string memory _transformation,
+    string memory _newDataType
+) public;
+
+// Lineage traversal
+function getTransformationLinks(bytes32 _dataHash) public view returns (TransformationLink[] memory); // Forward: parent → children (with descriptions)
+function getChildHashes(bytes32 _dataHash) public view returns (bytes32[] memory);                     // Forward: parent → children (hashes only)
+function getTransformationParents(bytes32 _dataHash) public view returns (bytes32[] memory);           // Reverse: child → parents
 
 // Record data access
 function recordAccess(bytes32 _dataHash) public;
@@ -260,6 +273,14 @@ function operatorSetDataStatus(bytes32 _dataHash, DataStatus _newStatus) public;
 function batchRegisterData(bytes32[] memory _dataHashes, string[] memory _dataTypes) public;
 function batchRecordAccess(bytes32[] memory _dataHashes) public;
 ```
+
+**Lineage Traversal:**
+
+| Direction | Method | Returns |
+|-----------|--------|---------|
+| Forward (parent → children) | `getChildHashes(hash)` | `bytes32[]` of child hashes |
+| Forward (with descriptions) | `getTransformationLinks(hash)` | `TransformationLink[]` (hash + description) |
+| Reverse (child → parents) | `getTransformationParents(hash)` | `bytes32[]` — 1 element for transforms, N for merges, empty for roots |
 
 **Data Statuses:**
 - `Active`: Normal operational state
@@ -296,6 +317,14 @@ function transformDataWithConsent(
     bytes32 _originalDataHash,
     bytes32 _newDataHash,
     string memory _transformation,
+    string memory _consentPurpose
+) public;
+
+function mergeDataWithConsent(
+    bytes32[] memory _sourceDataHashes,
+    bytes32 _newDataHash,
+    string memory _transformation,
+    string memory _newDataType,
     string memory _consentPurpose
 ) public;
 
@@ -526,7 +555,7 @@ test/
 └── PurposeRegistry.test.ts
 ```
 
-**Current Test Count: 281 tests**
+**Current Test Count: 299 tests**
 
 ## Limits and Bounds
 
@@ -537,6 +566,7 @@ All contracts enforce limits to control gas costs and prevent abuse. These are p
 | Limit | Value | Meaning |
 |-------|-------|---------|
 | `MAX_TRANSFORMATIONS` | 100 | Max transformations branching from a single data record. Each new version is its own record with its own budget, so provenance chains can be arbitrarily deep. |
+| `MAX_MERGE_SOURCES` | 50 | Max source datasets in a single `recordMergeTransformation` call. |
 | `MAX_ACCESSORS` | 1000 | Max unique addresses recorded as accessors of a single data record. Duplicates are deduplicated automatically. |
 | `MAX_ACCESS_DURATION` | 2 years | Longest access grant via DataAccessControl. |
 | `MAX_DELEGATION_DURATION` | 1 year | Longest consent delegation via ConsentProxy. |
@@ -631,6 +661,7 @@ event ConsentGivenBySig(address indexed user, string purpose, address indexed re
 ```solidity
 event DataRegistered(bytes32 indexed dataHash, address indexed owner, string dataType);
 event DataTransformed(bytes32 indexed originalDataHash, bytes32 indexed newDataHash, string transformation);
+event DataMerged(bytes32 indexed newDataHash, bytes32[] sourceDataHashes, string transformation);
 event DataAccessed(bytes32 indexed dataHash, address indexed accessor);
 event DataStatusChanged(bytes32 indexed dataHash, DataStatus oldStatus, DataStatus newStatus);
 event DataOwnershipTransferred(bytes32 indexed dataHash, address indexed previousOwner, address indexed newOwner);

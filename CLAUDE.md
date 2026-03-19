@@ -50,9 +50,12 @@ The project consists of four Solidity contracts:
 
 **DataProvenance** (`contracts/DataProvenance.sol`)
 - Tracks data ownership and transformation history using content hashes
+- `TransformationLink` struct stores child hash + description for bidirectional lineage traversal
+- `recordMergeTransformation()` for multi-source merge/join operations (up to 50 sources)
+- Forward traversal: `getTransformationLinks()`, `getChildHashes()`; Reverse: `getTransformationParents()`
 - DataStatus enum: Active, Restricted, Deleted
 - Ownership transfer and access deduplication
-- Max limits: 100 transformations, 1000 accessors per data record
+- Max limits: 100 transformations, 50 merge sources, 1000 accessors per data record
 
 **IntegratedConsentProvenanceSystem** (`contracts/IntegratedConsentProvenanceSystem.sol`)
 - Coordinator contract linking consent and provenance
@@ -107,7 +110,7 @@ All contracts use `pragma solidity 0.8.20`.
 
 ## Limits and Bounds
 
-Per-record: `MAX_TRANSFORMATIONS` = 100 (per record, chains are unbounded), `MAX_ACCESSORS` = 1000, `MAX_ACCESS_DURATION` = 2 years, `MAX_DELEGATION_DURATION` = 1 year. Strings: `dataType` 64, `transformation` 256, `purpose` 256, `policyUrl` 512. Batch ops: 50-100 items per call. No limit on total records, chain depth, or users. See README.md for full table.
+Per-record: `MAX_TRANSFORMATIONS` = 100 (per record, chains are unbounded), `MAX_MERGE_SOURCES` = 50, `MAX_ACCESSORS` = 1000, `MAX_ACCESS_DURATION` = 2 years, `MAX_DELEGATION_DURATION` = 1 year. Strings: `dataType` 64, `transformation` 256, `purpose` 256, `policyUrl` 512. Batch ops: 50-100 items per call. No limit on total records, chain depth, or users. See README.md for full table.
 
 ## Key Security Features
 
