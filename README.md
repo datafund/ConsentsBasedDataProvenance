@@ -2,6 +2,7 @@
 
 A comprehensive Ethereum smart contract system for managing user consent and data provenance on-chain. The system provides GDPR-compliant consent tracking, Kantara Initiative-compliant consent receipts, and complete data lineage management.
 
+> **Testnet deployment:** The DataProvenance contract is currently deployed on Base Sepolia (testnet). The other contracts in this repository (ConsentReceipt, Kantara, etc.) are available for local development but not yet deployed on a public network.
 ## Table of Contents
 
 - [Features](#features)
