@@ -2,6 +2,7 @@
 
 A comprehensive Ethereum smart contract system for managing user consent and data provenance on-chain. The system provides GDPR-compliant consent tracking, Kantara Initiative-compliant consent receipts, and complete data lineage management.
 
+> **Testnet deployment:** The DataProvenance contract is currently deployed on Base Sepolia (testnet). The other contracts in this repository (ConsentReceipt, Kantara, etc.) are available for local development but not yet deployed on a public network.
 ## Table of Contents
 
 - [Features](#features)
@@ -778,20 +779,30 @@ See [`deployments.md`](deployments.md) for the auto-generated reference. Summary
 
 | Network | Contract | Address | Explorer |
 |---------|----------|---------|----------|
-| Base Sepolia | ConsentAuditLog | `0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4` | [Blockscout](https://base-sepolia.blockscout.com/address/0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4) |
-| Base Sepolia | ConsentProxy | `0x5B96F9d0b896f4AD9E0fE368259479eF369853FE` | [Blockscout](https://base-sepolia.blockscout.com/address/0x5B96F9d0b896f4AD9E0fE368259479eF369853FE) |
-| Base Sepolia | ConsentReceipt | `0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF` | [Blockscout](https://base-sepolia.blockscout.com/address/0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF) |
-| Base Sepolia | DataProvenance | `0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a` | [Blockscout](https://base-sepolia.blockscout.com/address/0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a) |
-| Base Sepolia | KantaraConsentReceipt | `0x64CC6738E43dc2c6D2E70120f351Bc85f563481C` | [Blockscout](https://base-sepolia.blockscout.com/address/0x64CC6738E43dc2c6D2E70120f351Bc85f563481C) |
-| Base Sepolia | PurposeRegistry | `0x50F132Dc634C80d940b93551D1659B87c82599F1` | [Blockscout](https://base-sepolia.blockscout.com/address/0x50F132Dc634C80d940b93551D1659B87c82599F1) |
-| Base Sepolia | DataAccessControl | `0xe3056301801b11a2dF5c31A9E86f46c9c604414A` | [Blockscout](https://base-sepolia.blockscout.com/address/0xe3056301801b11a2dF5c31A9E86f46c9c604414A) |
-| Base Sepolia | DataDeletion | `0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf` | [Blockscout](https://base-sepolia.blockscout.com/address/0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf) |
-| Base Sepolia | IntegratedConsentProvenanceSystem | `0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7` | [Blockscout](https://base-sepolia.blockscout.com/address/0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7) |
+| Base Sepolia | ConsentAuditLog | `0x6C539a0a96721311D8ACc7eCa06BA92fDe07E65F` | [Blockscout](https://base-sepolia.blockscout.com/address/0x6C539a0a96721311D8ACc7eCa06BA92fDe07E65F) |
+| Base Sepolia | ConsentProxy | `0x93a55D9Db5d6d2d18e909E5c32656Eaa5A4F6cC7` | [Blockscout](https://base-sepolia.blockscout.com/address/0x93a55D9Db5d6d2d18e909E5c32656Eaa5A4F6cC7) |
+| Base Sepolia | ConsentReceipt | `0x22a0788994C1DcaECc82d437D85C60b6b8cCa830` | [Blockscout](https://base-sepolia.blockscout.com/address/0x22a0788994C1DcaECc82d437D85C60b6b8cCa830) |
+| Base Sepolia | DataAccessControl | `0x9462626D1d6431EB811fef5c21BcF7FdADeD2AB6` | [Blockscout](https://base-sepolia.blockscout.com/address/0x9462626D1d6431EB811fef5c21BcF7FdADeD2AB6) |
+| Base Sepolia | DataDeletion | `0x7372c12D36457B16BC1BC4f50FC6B64d4444376B` | [Blockscout](https://base-sepolia.blockscout.com/address/0x7372c12D36457B16BC1BC4f50FC6B64d4444376B) |
+| Base Sepolia | DataProvenance | `0xb309dDe00819668ac74075813108659d4332D2cC` | [Blockscout](https://base-sepolia.blockscout.com/address/0xb309dDe00819668ac74075813108659d4332D2cC) |
+| Base Sepolia | IntegratedConsentProvenanceSystem | `0x4AC4bBB4E12C4450209C9b8C82a13428C2f21db5` | [Blockscout](https://base-sepolia.blockscout.com/address/0x4AC4bBB4E12C4450209C9b8C82a13428C2f21db5) |
+| Base Sepolia | KantaraConsentReceipt | `0xD950D001A0De901cDF3e74Edc712291DB185e3b7` | [Blockscout](https://base-sepolia.blockscout.com/address/0xD950D001A0De901cDF3e74Edc712291DB185e3b7) |
+| Base Sepolia | PurposeRegistry | `0xaa1A07FB9739683E5856B790faaD02b57FB21EA4` | [Blockscout](https://base-sepolia.blockscout.com/address/0xaa1A07FB9739683E5856B790faaD02b57FB21EA4) |
 
 #### Previous Deployments (Superseded)
 
 | Network | Contract | Address | Explorer | Notes |
 |---------|----------|---------|----------|-------|
+| Base Sepolia | All contracts (v2) | See below | | Pre-storageRef, full 9-contract deploy |
+| Base Sepolia | ConsentAuditLog (v2) | `0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4` | [Blockscout](https://base-sepolia.blockscout.com/address/0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4) | |
+| Base Sepolia | ConsentProxy (v2) | `0x5B96F9d0b896f4AD9E0fE368259479eF369853FE` | [Blockscout](https://base-sepolia.blockscout.com/address/0x5B96F9d0b896f4AD9E0fE368259479eF369853FE) | |
+| Base Sepolia | ConsentReceipt (v2) | `0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF` | [Blockscout](https://base-sepolia.blockscout.com/address/0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF) | |
+| Base Sepolia | DataProvenance (v2) | `0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a` | [Blockscout](https://base-sepolia.blockscout.com/address/0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a) | |
+| Base Sepolia | KantaraConsentReceipt (v2) | `0x64CC6738E43dc2c6D2E70120f351Bc85f563481C` | [Blockscout](https://base-sepolia.blockscout.com/address/0x64CC6738E43dc2c6D2E70120f351Bc85f563481C) | |
+| Base Sepolia | PurposeRegistry (v2) | `0x50F132Dc634C80d940b93551D1659B87c82599F1` | [Blockscout](https://base-sepolia.blockscout.com/address/0x50F132Dc634C80d940b93551D1659B87c82599F1) | |
+| Base Sepolia | DataAccessControl (v2) | `0xe3056301801b11a2dF5c31A9E86f46c9c604414A` | [Blockscout](https://base-sepolia.blockscout.com/address/0xe3056301801b11a2dF5c31A9E86f46c9c604414A) | |
+| Base Sepolia | DataDeletion (v2) | `0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf` | [Blockscout](https://base-sepolia.blockscout.com/address/0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf) | |
+| Base Sepolia | IntegratedConsentProvenanceSystem (v2) | `0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7` | [Blockscout](https://base-sepolia.blockscout.com/address/0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7) | |
 | Base Sepolia | DataProvenance (v1) | `0x9a3c6F47B69211F05891CCb7aD33596290b9fE64` | [Blockscout](https://base-sepolia.blockscout.com/address/0x9a3c6F47B69211F05891CCb7aD33596290b9fE64#code) | Pre-TransformationLink struct, standalone deploy |
 
 ### ABIs

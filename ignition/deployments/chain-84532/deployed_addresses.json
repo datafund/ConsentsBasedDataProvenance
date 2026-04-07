@@ -7,5 +7,14 @@
   "ConsentSystem#PurposeRegistry": "0x50F132Dc634C80d940b93551D1659B87c82599F1",
   "ConsentSystem#DataAccessControl": "0xe3056301801b11a2dF5c31A9E86f46c9c604414A",
   "ConsentSystem#DataDeletion": "0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf",
-  "ConsentSystem#IntegratedConsentProvenanceSystem": "0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7"
+  "ConsentSystem#IntegratedConsentProvenanceSystem": "0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7",
+  "ConsentSystemV2#ConsentAuditLog": "0x6C539a0a96721311D8ACc7eCa06BA92fDe07E65F",
+  "ConsentSystemV2#ConsentProxy": "0x93a55D9Db5d6d2d18e909E5c32656Eaa5A4F6cC7",
+  "ConsentSystemV2#ConsentReceipt": "0x22a0788994C1DcaECc82d437D85C60b6b8cCa830",
+  "ConsentSystemV2#DataProvenance": "0xb309dDe00819668ac74075813108659d4332D2cC",
+  "ConsentSystemV2#KantaraConsentReceipt": "0xD950D001A0De901cDF3e74Edc712291DB185e3b7",
+  "ConsentSystemV2#DataAccessControl": "0x9462626D1d6431EB811fef5c21BcF7FdADeD2AB6",
+  "ConsentSystemV2#DataDeletion": "0x7372c12D36457B16BC1BC4f50FC6B64d4444376B",
+  "ConsentSystemV2#IntegratedConsentProvenanceSystem": "0x4AC4bBB4E12C4450209C9b8C82a13428C2f21db5",
+  "ConsentSystemV2#PurposeRegistry": "0xaa1A07FB9739683E5856B790faaD02b57FB21EA4"
 }
