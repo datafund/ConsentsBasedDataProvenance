@@ -258,6 +258,22 @@ contract DataProvenance {
         return storageRefToDataHash[_storageRef];
     }
 
+    /// @notice Set storage reference for an existing data record (set-once, immutable after)
+    /// @param _dataHash Hash of the data record
+    /// @param _storageRef Reference to where the data is stored (e.g. Swarm hash)
+    function setStorageRef(bytes32 _dataHash, bytes32 _storageRef) public {
+        require(dataRecords[_dataHash].owner == msg.sender, "Not the owner");
+        require(_storageRef != bytes32(0), "Invalid storage ref");
+        require(_storageRef != _dataHash, "Storage ref cannot equal data hash");
+        require(dataRecords[_dataHash].storageRef == bytes32(0), "Storage ref already set");
+        require(storageRefToDataHash[_storageRef] == bytes32(0), "Storage ref already mapped");
+
+        dataRecords[_dataHash].storageRef = _storageRef;
+        storageRefToDataHash[_storageRef] = _dataHash;
+
+        emit StorageRefLinked(_dataHash, _storageRef);
+    }
+
     /// @notice Record a transformation of data
     /// @param _originalDataHash Hash of original data
     /// @param _newDataHash Hash of transformed data

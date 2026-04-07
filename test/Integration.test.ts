@@ -171,6 +171,31 @@ describe("Integration Tests", function () {
       // Verify consent tracking still works
       expect(await integratedSystem.getDataConsentPurpose(DATA_HASH_1)).to.equal("storage");
     });
+
+    it("should support transform -> upload -> setStorageRef workflow", async function () {
+      const SWARM_REF_TRANSFORMED = ethers.keccak256(ethers.toUtf8Bytes("swarm_transformed"));
+
+      // Register original with storageRef
+      await dataProvenance.connect(dataSubject)["registerData(bytes32,string,bytes32)"](
+        DATA_HASH_1, "document", SWARM_REF
+      );
+
+      // Transform — new record has no storageRef
+      await dataProvenance.connect(dataSubject).recordTransformation(DATA_HASH_1, DATA_HASH_2, "anonymized");
+      const before = await dataProvenance.getDataRecord(DATA_HASH_2);
+      expect(before.storageRef).to.equal(ethers.ZeroHash);
+
+      // Upload transformed data to Swarm, then link
+      await dataProvenance.connect(dataSubject).setStorageRef(DATA_HASH_2, SWARM_REF_TRANSFORMED);
+
+      // Both records now have storageRefs, both are bidirectionally queryable
+      expect(await dataProvenance.getDataHashByStorageRef(SWARM_REF)).to.equal(DATA_HASH_1);
+      expect(await dataProvenance.getDataHashByStorageRef(SWARM_REF_TRANSFORMED)).to.equal(DATA_HASH_2);
+
+      // Lineage still intact
+      const parents = await dataProvenance.getTransformationParents(DATA_HASH_2);
+      expect(parents[0]).to.equal(DATA_HASH_1);
+    });
   });
 
   describe("Consent Revocation Impact", function () {

@@ -41,6 +41,7 @@ interface IDataProvenance {
     function transferDataOwnership(bytes32 _dataHash, address _newOwner) external;
     function getDataRecord(bytes32 _dataHash) external view returns (DataRecord memory);
     function getDataHashByStorageRef(bytes32 _storageRef) external view returns (bytes32);
+    function setStorageRef(bytes32 _dataHash, bytes32 _storageRef) external;
     function getTransformationLinks(bytes32 _dataHash) external view returns (TransformationLink[] memory);
     function getChildHashes(bytes32 _dataHash) external view returns (bytes32[] memory);
     function getTransformationParents(bytes32 _dataHash) external view returns (bytes32[] memory);

@@ -53,6 +53,7 @@ The project consists of four Solidity contracts:
 - `TransformationLink` struct stores child hash + description for bidirectional lineage traversal
 - `storageRef` field on `DataRecord` links content hash to storage location (e.g. Swarm reference)
 - `storageRefToDataHash` reverse mapping enables bidirectional lookup (storage ref → data hash)
+- `setStorageRef()` allows set-once attachment of storage ref to existing records (e.g. after transformation)
 - `recordMergeTransformation()` for multi-source merge/join operations (up to 50 sources)
 - Forward traversal: `getTransformationLinks()`, `getChildHashes()`; Reverse: `getTransformationParents()`
 - DataStatus enum: Active, Restricted, Deleted

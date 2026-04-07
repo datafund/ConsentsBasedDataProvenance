@@ -240,6 +240,9 @@ function registerDataFor(bytes32 _dataHash, string memory _dataType, address _ac
 // Storage reference lookup (e.g. Swarm hash → content hash)
 function getDataHashByStorageRef(bytes32 _storageRef) public view returns (bytes32);
 
+// Set storage reference after registration (set-once, immutable after)
+function setStorageRef(bytes32 _dataHash, bytes32 _storageRef) public;
+
 // Record data transformation (single source → derived output)
 function recordTransformation(
     bytes32 _originalDataHash,
@@ -719,7 +722,9 @@ event ConsentUpdated(bytes32 indexed receiptId, address indexed dataSubject);
 | `Max transformations reached` | DataProvenance | 100 transformation limit hit |
 | `Max accessors reached` | DataProvenance | 1000 accessor limit hit |
 | `Storage ref already mapped` | DataProvenance | Storage reference already linked to another data hash |
+| `Storage ref already set` | DataProvenance | Storage reference is immutable once set (set-once) |
 | `Storage ref cannot equal data hash` | DataProvenance | Storage reference must differ from the data hash |
+| `Invalid storage ref` | DataProvenance | Storage reference cannot be zero hash |
 | `Storage refs length mismatch` | DataProvenance | Batch storageRefs array length doesn't match data hashes |
 | `Not authorized delegate` | DataProvenance | Caller not authorized to act for owner |
 | `AccessControl: admin role required` | DataProvenance | Caller lacks admin role |

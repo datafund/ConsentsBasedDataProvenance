@@ -1381,6 +1381,30 @@ describe("Security Tests", function () {
         expect(record.owner).to.equal(victim.address);
         expect(record.storageRef).to.equal(ethers.ZeroHash);
       });
+
+      it("should prevent overwriting an existing storageRef (immutability)", async function () {
+        const dataHash = ethers.keccak256(ethers.toUtf8Bytes("immutable_test"));
+        const ref1 = ethers.keccak256(ethers.toUtf8Bytes("ref1"));
+        const ref2 = ethers.keccak256(ethers.toUtf8Bytes("ref2"));
+
+        await dataProvenance.connect(victim).registerData(dataHash, "type1");
+        await dataProvenance.connect(victim).setStorageRef(dataHash, ref1);
+
+        await expect(
+          dataProvenance.connect(victim).setStorageRef(dataHash, ref2)
+        ).to.be.revertedWith("Storage ref already set");
+      });
+
+      it("should prevent attacker from setting storageRef on victim's data", async function () {
+        const dataHash = ethers.keccak256(ethers.toUtf8Bytes("victim_data"));
+        const ref = ethers.keccak256(ethers.toUtf8Bytes("attacker_ref"));
+
+        await dataProvenance.connect(victim).registerData(dataHash, "type1");
+
+        await expect(
+          dataProvenance.connect(attacker).setStorageRef(dataHash, ref)
+        ).to.be.revertedWith("Not the owner");
+      });
     });
 
     describe("Pagination Edge Cases", function () {

@@ -184,6 +184,120 @@ describe("DataProvenance", function () {
     });
   });
 
+  describe("setStorageRef", function () {
+    const STORAGE_REF = ethers.keccak256(ethers.toUtf8Bytes("swarm_ref"));
+
+    beforeEach(async function () {
+      await dataProvenance.connect(user1).registerData(DATA_HASH_1, "personal");
+    });
+
+    it("should allow owner to set storageRef on record without one", async function () {
+      await expect(dataProvenance.connect(user1).setStorageRef(DATA_HASH_1, STORAGE_REF))
+        .to.emit(dataProvenance, "StorageRefLinked")
+        .withArgs(DATA_HASH_1, STORAGE_REF);
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.storageRef).to.equal(STORAGE_REF);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF)).to.equal(DATA_HASH_1);
+    });
+
+    it("should revert when non-owner tries to set storageRef", async function () {
+      await expect(
+        dataProvenance.connect(user2).setStorageRef(DATA_HASH_1, STORAGE_REF)
+      ).to.be.revertedWith("Not the owner");
+    });
+
+    it("should revert when storageRef is already set (immutability)", async function () {
+      await dataProvenance.connect(user1).setStorageRef(DATA_HASH_1, STORAGE_REF);
+
+      const anotherRef = ethers.keccak256(ethers.toUtf8Bytes("another_ref"));
+      await expect(
+        dataProvenance.connect(user1).setStorageRef(DATA_HASH_1, anotherRef)
+      ).to.be.revertedWith("Storage ref already set");
+    });
+
+    it("should revert for zero storageRef", async function () {
+      await expect(
+        dataProvenance.connect(user1).setStorageRef(DATA_HASH_1, ethers.ZeroHash)
+      ).to.be.revertedWith("Invalid storage ref");
+    });
+
+    it("should revert when storageRef equals data hash", async function () {
+      await expect(
+        dataProvenance.connect(user1).setStorageRef(DATA_HASH_1, DATA_HASH_1)
+      ).to.be.revertedWith("Storage ref cannot equal data hash");
+    });
+
+    it("should revert when storageRef is already mapped to another hash", async function () {
+      await dataProvenance.connect(user1).setStorageRef(DATA_HASH_1, STORAGE_REF);
+      await dataProvenance.connect(user1).registerData(DATA_HASH_2, "financial");
+
+      await expect(
+        dataProvenance.connect(user1).setStorageRef(DATA_HASH_2, STORAGE_REF)
+      ).to.be.revertedWith("Storage ref already mapped");
+    });
+
+    it("should work on transformed data records", async function () {
+      await dataProvenance.connect(user1).recordTransformation(DATA_HASH_1, DATA_HASH_2, "anonymized");
+
+      // Transformed record has no storageRef
+      const before = await dataProvenance.getDataRecord(DATA_HASH_2);
+      expect(before.storageRef).to.equal(ethers.ZeroHash);
+
+      // Owner can set it after the fact
+      await dataProvenance.connect(user1).setStorageRef(DATA_HASH_2, STORAGE_REF);
+
+      const after = await dataProvenance.getDataRecord(DATA_HASH_2);
+      expect(after.storageRef).to.equal(STORAGE_REF);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF)).to.equal(DATA_HASH_2);
+    });
+
+    it("should work on data with non-active status", async function () {
+      await dataProvenance.connect(user1).setDataStatus(DATA_HASH_1, 1); // Restricted
+
+      await dataProvenance.connect(user1).setStorageRef(DATA_HASH_1, STORAGE_REF);
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.storageRef).to.equal(STORAGE_REF);
+    });
+
+    it("should revert on non-existent data hash", async function () {
+      const nonExistent = ethers.keccak256(ethers.toUtf8Bytes("does_not_exist"));
+      await expect(
+        dataProvenance.connect(user1).setStorageRef(nonExistent, STORAGE_REF)
+      ).to.be.revertedWith("Not the owner");
+    });
+
+    it("should revert on data registered with storageRef at registration", async function () {
+      const STORAGE_REF_2 = ethers.keccak256(ethers.toUtf8Bytes("swarm_ref_2"));
+      const ANOTHER_REF = ethers.keccak256(ethers.toUtf8Bytes("another_ref"));
+
+      await dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_2, "financial", STORAGE_REF_2);
+
+      await expect(
+        dataProvenance.connect(user1).setStorageRef(DATA_HASH_2, ANOTHER_REF)
+      ).to.be.revertedWith("Storage ref already set");
+    });
+
+    it("should work on merged data records", async function () {
+      await dataProvenance.connect(user1).registerData(DATA_HASH_2, "financial");
+
+      await dataProvenance.connect(user1).recordMergeTransformation(
+        [DATA_HASH_1, DATA_HASH_2], DATA_HASH_3, "joined", "combined"
+      );
+
+      // Merged record has no storageRef
+      const before = await dataProvenance.getDataRecord(DATA_HASH_3);
+      expect(before.storageRef).to.equal(ethers.ZeroHash);
+
+      await dataProvenance.connect(user1).setStorageRef(DATA_HASH_3, STORAGE_REF);
+
+      const after = await dataProvenance.getDataRecord(DATA_HASH_3);
+      expect(after.storageRef).to.equal(STORAGE_REF);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF)).to.equal(DATA_HASH_3);
+    });
+  });
+
   describe("recordTransformation", function () {
     beforeEach(async function () {
       await dataProvenance.connect(user1).registerData(DATA_HASH_1, "personal");
