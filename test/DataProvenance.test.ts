@@ -74,6 +74,116 @@ describe("DataProvenance", function () {
     });
   });
 
+  describe("storageRef", function () {
+    const STORAGE_REF_1 = ethers.keccak256(ethers.toUtf8Bytes("swarm_ref_1"));
+    const STORAGE_REF_2 = ethers.keccak256(ethers.toUtf8Bytes("swarm_ref_2"));
+
+    it("should register data with storage reference", async function () {
+      await expect(
+        dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_1, "personal", STORAGE_REF_1)
+      )
+        .to.emit(dataProvenance, "DataRegistered")
+        .withArgs(DATA_HASH_1, user1.address, "personal")
+        .and.to.emit(dataProvenance, "StorageRefLinked")
+        .withArgs(DATA_HASH_1, STORAGE_REF_1);
+    });
+
+    it("should store storageRef in data record", async function () {
+      await dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_1, "personal", STORAGE_REF_1);
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.storageRef).to.equal(STORAGE_REF_1);
+    });
+
+    it("should allow reverse lookup by storageRef", async function () {
+      await dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_1, "personal", STORAGE_REF_1);
+
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF_1)).to.equal(DATA_HASH_1);
+    });
+
+    it("should return zero hash for unknown storageRef", async function () {
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF_1)).to.equal(ethers.ZeroHash);
+    });
+
+    it("should store zero storageRef when registered without one", async function () {
+      await dataProvenance.connect(user1).registerData(DATA_HASH_1, "personal");
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.storageRef).to.equal(ethers.ZeroHash);
+    });
+
+    it("should not emit StorageRefLinked when registered without storageRef", async function () {
+      await expect(
+        dataProvenance.connect(user1).registerData(DATA_HASH_1, "personal")
+      ).to.not.emit(dataProvenance, "StorageRefLinked");
+    });
+
+    it("should not populate reverse mapping for zero storageRef", async function () {
+      await dataProvenance.connect(user1).registerData(DATA_HASH_1, "personal");
+
+      expect(await dataProvenance.getDataHashByStorageRef(ethers.ZeroHash)).to.equal(ethers.ZeroHash);
+    });
+
+    it("should revert when storageRef is already mapped", async function () {
+      await dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_1, "personal", STORAGE_REF_1);
+
+      await expect(
+        dataProvenance.connect(user2)["registerData(bytes32,string,bytes32)"](DATA_HASH_2, "financial", STORAGE_REF_1)
+      ).to.be.revertedWith("Storage ref already mapped");
+    });
+
+    it("should revert when storageRef equals data hash", async function () {
+      await expect(
+        dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_1, "personal", DATA_HASH_1)
+      ).to.be.revertedWith("Storage ref cannot equal data hash");
+    });
+
+    it("should allow different storageRefs for different data hashes", async function () {
+      await dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_1, "personal", STORAGE_REF_1);
+      await dataProvenance.connect(user1)["registerData(bytes32,string,bytes32)"](DATA_HASH_2, "financial", STORAGE_REF_2);
+
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF_1)).to.equal(DATA_HASH_1);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF_2)).to.equal(DATA_HASH_2);
+    });
+
+    it("should support delegated registration with storageRef", async function () {
+      await dataProvenance.connect(user1).setDelegate(user2.address, true);
+
+      await dataProvenance.connect(user2)["registerDataFor(bytes32,string,address,bytes32)"](
+        DATA_HASH_1, "personal", user1.address, STORAGE_REF_1
+      );
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.owner).to.equal(user1.address);
+      expect(record.storageRef).to.equal(STORAGE_REF_1);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF_1)).to.equal(DATA_HASH_1);
+    });
+
+    it("should support batch registration with storageRefs", async function () {
+      await dataProvenance.connect(user1)["batchRegisterData(bytes32[],string[],bytes32[])"](
+        [DATA_HASH_1, DATA_HASH_2],
+        ["personal", "financial"],
+        [STORAGE_REF_1, STORAGE_REF_2]
+      );
+
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF_1)).to.equal(DATA_HASH_1);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF_2)).to.equal(DATA_HASH_2);
+    });
+
+    it("should support batch registration with zero storageRefs", async function () {
+      await dataProvenance.connect(user1)["batchRegisterData(bytes32[],string[],bytes32[])"](
+        [DATA_HASH_1, DATA_HASH_2],
+        ["personal", "financial"],
+        [ethers.ZeroHash, ethers.ZeroHash]
+      );
+
+      const record1 = await dataProvenance.getDataRecord(DATA_HASH_1);
+      const record2 = await dataProvenance.getDataRecord(DATA_HASH_2);
+      expect(record1.storageRef).to.equal(ethers.ZeroHash);
+      expect(record2.storageRef).to.equal(ethers.ZeroHash);
+    });
+  });
+
   describe("recordTransformation", function () {
     beforeEach(async function () {
       await dataProvenance.connect(user1).registerData(DATA_HASH_1, "personal");

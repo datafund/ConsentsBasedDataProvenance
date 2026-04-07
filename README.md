@@ -233,7 +233,12 @@ Data lineage tracking with RBAC, delegated ownership, and bidirectional lineage 
 ```solidity
 // Register data
 function registerData(bytes32 _dataHash, string memory _dataType) public;
+function registerData(bytes32 _dataHash, string memory _dataType, bytes32 _storageRef) public;
 function registerDataFor(bytes32 _dataHash, string memory _dataType, address _actualOwner) public;
+function registerDataFor(bytes32 _dataHash, string memory _dataType, address _actualOwner, bytes32 _storageRef) public;
+
+// Storage reference lookup (e.g. Swarm hash → content hash)
+function getDataHashByStorageRef(bytes32 _storageRef) public view returns (bytes32);
 
 // Record data transformation (single source → derived output)
 function recordTransformation(
@@ -272,6 +277,7 @@ function operatorSetDataStatus(bytes32 _dataHash, DataStatus _newStatus) public;
 
 // Batch operations
 function batchRegisterData(bytes32[] memory _dataHashes, string[] memory _dataTypes) public;
+function batchRegisterData(bytes32[] memory _dataHashes, string[] memory _dataTypes, bytes32[] memory _storageRefs) public;
 function batchRecordAccess(bytes32[] memory _dataHashes) public;
 ```
 
@@ -305,11 +311,26 @@ function registerDataWithConsent(
     string memory _consentPurpose
 ) public;
 
+function registerDataWithConsent(
+    bytes32 _dataHash,
+    string memory _dataType,
+    string memory _consentPurpose,
+    bytes32 _storageRef
+) public;
+
 function registerDataForWithConsent(
     bytes32 _dataHash,
     string memory _dataType,
     string memory _consentPurpose,
     address _actualOwner
+) public;
+
+function registerDataForWithConsent(
+    bytes32 _dataHash,
+    string memory _dataType,
+    string memory _consentPurpose,
+    address _actualOwner,
+    bytes32 _storageRef
 ) public;
 
 function accessDataWithConsent(bytes32 _dataHash, string memory _consentPurpose) public;
@@ -661,6 +682,7 @@ event ConsentGivenBySig(address indexed user, string purpose, address indexed re
 #### DataProvenance Events
 ```solidity
 event DataRegistered(bytes32 indexed dataHash, address indexed owner, string dataType);
+event StorageRefLinked(bytes32 indexed dataHash, bytes32 indexed storageRef);
 event DataTransformed(bytes32 indexed originalDataHash, bytes32 indexed newDataHash, string transformation);
 event DataMerged(bytes32 indexed newDataHash, bytes32[] sourceDataHashes, string transformation);
 event DataAccessed(bytes32 indexed dataHash, address indexed accessor);
@@ -696,6 +718,9 @@ event ConsentUpdated(bytes32 indexed receiptId, address indexed dataSubject);
 | `Data is not active` | DataProvenance | Data status is Restricted or Deleted |
 | `Max transformations reached` | DataProvenance | 100 transformation limit hit |
 | `Max accessors reached` | DataProvenance | 1000 accessor limit hit |
+| `Storage ref already mapped` | DataProvenance | Storage reference already linked to another data hash |
+| `Storage ref cannot equal data hash` | DataProvenance | Storage reference must differ from the data hash |
+| `Storage refs length mismatch` | DataProvenance | Batch storageRefs array length doesn't match data hashes |
 | `Not authorized delegate` | DataProvenance | Caller not authorized to act for owner |
 | `AccessControl: admin role required` | DataProvenance | Caller lacks admin role |
 | `No valid consent for this purpose` | IntegratedSystem | Required consent not found |

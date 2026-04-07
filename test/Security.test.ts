@@ -1333,6 +1333,56 @@ describe("Security Tests", function () {
       });
     });
 
+    describe("StorageRef Security", function () {
+      let dataProvenance: DataProvenance;
+
+      beforeEach(async function () {
+        const DataProvenanceFactory = await ethers.getContractFactory("DataProvenance");
+        dataProvenance = await DataProvenanceFactory.deploy();
+        await dataProvenance.waitForDeployment();
+      });
+
+      it("should prevent storageRef collision (two data hashes claiming same storageRef)", async function () {
+        const dataHash1 = ethers.keccak256(ethers.toUtf8Bytes("data_a"));
+        const dataHash2 = ethers.keccak256(ethers.toUtf8Bytes("data_b"));
+        const storageRef = ethers.keccak256(ethers.toUtf8Bytes("shared_ref"));
+
+        await dataProvenance.connect(victim)["registerData(bytes32,string,bytes32)"](dataHash1, "type1", storageRef);
+
+        await expect(
+          dataProvenance.connect(attacker)["registerData(bytes32,string,bytes32)"](dataHash2, "type2", storageRef)
+        ).to.be.revertedWith("Storage ref already mapped");
+      });
+
+      it("should prevent using data hash as its own storage ref", async function () {
+        const dataHash = ethers.keccak256(ethers.toUtf8Bytes("self_ref"));
+
+        await expect(
+          dataProvenance.connect(victim)["registerData(bytes32,string,bytes32)"](dataHash, "type1", dataHash)
+        ).to.be.revertedWith("Storage ref cannot equal data hash");
+      });
+
+      it("should not store zero storageRef in reverse mapping", async function () {
+        const dataHash = ethers.keccak256(ethers.toUtf8Bytes("no_ref"));
+
+        await dataProvenance.connect(victim).registerData(dataHash, "type1");
+
+        // Zero hash should not map to anything
+        expect(await dataProvenance.getDataHashByStorageRef(ethers.ZeroHash)).to.equal(ethers.ZeroHash);
+      });
+
+      it("should maintain backward compatibility with existing registerData", async function () {
+        const dataHash = ethers.keccak256(ethers.toUtf8Bytes("compat"));
+
+        // Original two-arg form should still work
+        await dataProvenance.connect(victim).registerData(dataHash, "type1");
+
+        const record = await dataProvenance.getDataRecord(dataHash);
+        expect(record.owner).to.equal(victim.address);
+        expect(record.storageRef).to.equal(ethers.ZeroHash);
+      });
+    });
+
     describe("Pagination Edge Cases", function () {
       it("should handle empty pagination correctly", async function () {
         const results = await dataProvenance.getUserDataRecordsPaginated(victim.address, 0, 10);

@@ -99,6 +99,51 @@ describe("IntegratedConsentProvenanceSystem", function () {
     });
   });
 
+  describe("registerDataWithConsent with storageRef", function () {
+    const STORAGE_REF = ethers.keccak256(ethers.toUtf8Bytes("swarm_ref"));
+
+    it("should register data with storageRef through consent system", async function () {
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+
+      await integratedSystem.connect(user1)["registerDataWithConsent(bytes32,string,string,bytes32)"](
+        DATA_HASH_1, "personal", "analytics", STORAGE_REF
+      );
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.storageRef).to.equal(STORAGE_REF);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF)).to.equal(DATA_HASH_1);
+    });
+
+    it("should revert without valid consent", async function () {
+      await expect(
+        integratedSystem.connect(user1)["registerDataWithConsent(bytes32,string,string,bytes32)"](
+          DATA_HASH_1, "personal", "analytics", STORAGE_REF
+        )
+      ).to.be.revertedWith("No valid consent for this purpose");
+    });
+  });
+
+  describe("registerDataForWithConsent with storageRef", function () {
+    const STORAGE_REF = ethers.keccak256(ethers.toUtf8Bytes("swarm_ref"));
+
+    beforeEach(async function () {
+      await dataProvenance.connect(user1).setDelegate(user2.address, true);
+      await dataProvenance.connect(user1).setDelegate(await integratedSystem.getAddress(), true);
+      await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
+    });
+
+    it("should allow delegated registration with storageRef", async function () {
+      await integratedSystem.connect(user2)["registerDataForWithConsent(bytes32,string,string,address,bytes32)"](
+        DATA_HASH_1, "personal", "analytics", user1.address, STORAGE_REF
+      );
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.owner).to.equal(user1.address);
+      expect(record.storageRef).to.equal(STORAGE_REF);
+      expect(await dataProvenance.getDataHashByStorageRef(STORAGE_REF)).to.equal(DATA_HASH_1);
+    });
+  });
+
   describe("accessDataWithConsent", function () {
     beforeEach(async function () {
       await consentReceipt.connect(user1)["giveConsent(string)"]("analytics");
