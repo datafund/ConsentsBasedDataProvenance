@@ -6,12 +6,12 @@
 
 | Contract | Address | Explorer |
 |----------|---------|----------|
-| ConsentAuditLog | `0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4` | [View](https://base-sepolia.blockscout.com/address/0x050384eA3e3ab6706afA6dB9DfA9FCd3A24901f4) |
-| ConsentProxy | `0x5B96F9d0b896f4AD9E0fE368259479eF369853FE` | [View](https://base-sepolia.blockscout.com/address/0x5B96F9d0b896f4AD9E0fE368259479eF369853FE) |
-| ConsentReceipt | `0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF` | [View](https://base-sepolia.blockscout.com/address/0xa88a0D18cABcd5d2eA06A028210713d98FccF5BF) |
-| DataAccessControl | `0xe3056301801b11a2dF5c31A9E86f46c9c604414A` | [View](https://base-sepolia.blockscout.com/address/0xe3056301801b11a2dF5c31A9E86f46c9c604414A) |
-| DataDeletion | `0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf` | [View](https://base-sepolia.blockscout.com/address/0x77CD9F9c67D4F3067f4088dfBE9B54bb5AC99aBf) |
-| DataProvenance | `0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a` | [View](https://base-sepolia.blockscout.com/address/0xD4a724CD7f5C4458cD2d884C2af6f011aC3Af80a) |
-| IntegratedConsentProvenanceSystem | `0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7` | [View](https://base-sepolia.blockscout.com/address/0x91EafB1BcE558c183AA04c3fC090DE31671AfdD7) |
-| KantaraConsentReceipt | `0x64CC6738E43dc2c6D2E70120f351Bc85f563481C` | [View](https://base-sepolia.blockscout.com/address/0x64CC6738E43dc2c6D2E70120f351Bc85f563481C) |
-| PurposeRegistry | `0x50F132Dc634C80d940b93551D1659B87c82599F1` | [View](https://base-sepolia.blockscout.com/address/0x50F132Dc634C80d940b93551D1659B87c82599F1) |
+| ConsentAuditLog | `0x6C539a0a96721311D8ACc7eCa06BA92fDe07E65F` | [View](https://base-sepolia.blockscout.com/address/0x6C539a0a96721311D8ACc7eCa06BA92fDe07E65F) |
+| ConsentProxy | `0x93a55D9Db5d6d2d18e909E5c32656Eaa5A4F6cC7` | [View](https://base-sepolia.blockscout.com/address/0x93a55D9Db5d6d2d18e909E5c32656Eaa5A4F6cC7) |
+| ConsentReceipt | `0x22a0788994C1DcaECc82d437D85C60b6b8cCa830` | [View](https://base-sepolia.blockscout.com/address/0x22a0788994C1DcaECc82d437D85C60b6b8cCa830) |
+| DataAccessControl | `0x9462626D1d6431EB811fef5c21BcF7FdADeD2AB6` | [View](https://base-sepolia.blockscout.com/address/0x9462626D1d6431EB811fef5c21BcF7FdADeD2AB6) |
+| DataDeletion | `0x7372c12D36457B16BC1BC4f50FC6B64d4444376B` | [View](https://base-sepolia.blockscout.com/address/0x7372c12D36457B16BC1BC4f50FC6B64d4444376B) |
+| DataProvenance | `0xb309dDe00819668ac74075813108659d4332D2cC` | [View](https://base-sepolia.blockscout.com/address/0xb309dDe00819668ac74075813108659d4332D2cC) |
+| IntegratedConsentProvenanceSystem | `0x4AC4bBB4E12C4450209C9b8C82a13428C2f21db5` | [View](https://base-sepolia.blockscout.com/address/0x4AC4bBB4E12C4450209C9b8C82a13428C2f21db5) |
+| KantaraConsentReceipt | `0xD950D001A0De901cDF3e74Edc712291DB185e3b7` | [View](https://base-sepolia.blockscout.com/address/0xD950D001A0De901cDF3e74Edc712291DB185e3b7) |
+| PurposeRegistry | `0xaa1A07FB9739683E5856B790faaD02b57FB21EA4` | [View](https://base-sepolia.blockscout.com/address/0xaa1A07FB9739683E5856B790faaD02b57FB21EA4) |

@@ -397,6 +397,67 @@
         "internalType": "string",
         "name": "_consentPurpose",
         "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_actualOwner",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_storageRef",
+        "type": "bytes32"
+      }
+    ],
+    "name": "registerDataForWithConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_dataType",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_storageRef",
+        "type": "bytes32"
+      }
+    ],
+    "name": "registerDataWithConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_dataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_dataType",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_consentPurpose",
+        "type": "string"
       }
     ],
     "name": "registerDataWithConsent",
