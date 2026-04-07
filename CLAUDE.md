@@ -51,6 +51,8 @@ The project consists of four Solidity contracts:
 **DataProvenance** (`contracts/DataProvenance.sol`)
 - Tracks data ownership and transformation history using content hashes
 - `TransformationLink` struct stores child hash + description for bidirectional lineage traversal
+- `storageRef` field on `DataRecord` links content hash to storage location (e.g. Swarm reference)
+- `storageRefToDataHash` reverse mapping enables bidirectional lookup (storage ref → data hash)
 - `recordMergeTransformation()` for multi-source merge/join operations (up to 50 sources)
 - Forward traversal: `getTransformationLinks()`, `getChildHashes()`; Reverse: `getTransformationParents()`
 - DataStatus enum: Active, Restricted, Deleted

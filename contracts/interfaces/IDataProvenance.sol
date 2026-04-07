@@ -14,12 +14,14 @@ interface IDataProvenance {
         address owner;
         string dataType;
         uint256 timestamp;
+        bytes32 storageRef;
         TransformationLink[] transformationLinks;
         address[] accessors;
         DataStatus status;
     }
 
     event DataRegistered(bytes32 indexed dataHash, address indexed owner, string dataType);
+    event StorageRefLinked(bytes32 indexed dataHash, bytes32 indexed storageRef);
     event DataTransformed(bytes32 indexed originalHash, bytes32 indexed newHash, string transformation);
     event DataMerged(bytes32 indexed newDataHash, bytes32[] sourceDataHashes, string transformation);
     event DataAccessed(bytes32 indexed dataHash, address indexed accessor);
@@ -27,15 +29,18 @@ interface IDataProvenance {
     event DataOwnershipTransferred(bytes32 indexed dataHash, address indexed oldOwner, address indexed newOwner);
 
     function registerData(bytes32 _dataHash, string memory _dataType) external;
+    function registerData(bytes32 _dataHash, string memory _dataType, bytes32 _storageRef) external;
     function setDelegate(address _delegate, bool _authorized) external;
     function isAuthorizedDelegate(address _owner, address _delegate) external view returns (bool);
     function registerDataFor(bytes32 _dataHash, string memory _dataType, address _actualOwner) external;
+    function registerDataFor(bytes32 _dataHash, string memory _dataType, address _actualOwner, bytes32 _storageRef) external;
     function recordTransformation(bytes32 _originalHash, bytes32 _newHash, string memory _transformation) external;
     function recordMergeTransformation(bytes32[] memory _sourceDataHashes, bytes32 _newDataHash, string memory _transformation, string memory _newDataType) external;
     function recordAccess(bytes32 _dataHash) external;
     function setDataStatus(bytes32 _dataHash, DataStatus _status) external;
     function transferDataOwnership(bytes32 _dataHash, address _newOwner) external;
     function getDataRecord(bytes32 _dataHash) external view returns (DataRecord memory);
+    function getDataHashByStorageRef(bytes32 _storageRef) external view returns (bytes32);
     function getTransformationLinks(bytes32 _dataHash) external view returns (TransformationLink[] memory);
     function getChildHashes(bytes32 _dataHash) external view returns (bytes32[] memory);
     function getTransformationParents(bytes32 _dataHash) external view returns (bytes32[] memory);

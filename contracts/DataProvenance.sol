@@ -28,6 +28,7 @@ contract DataProvenance {
         address owner;
         uint256 timestamp;
         string dataType;
+        bytes32 storageRef;
         TransformationLink[] transformationLinks;
         address[] accessors;
         DataStatus status;
@@ -38,6 +39,8 @@ contract DataProvenance {
     // Array to support both single-parent transforms and multi-parent merges
     mapping(bytes32 => bytes32[]) private transformationParents;
     mapping(address => bytes32[]) public userDataRecords;
+    // Reverse lookup: storage reference → data hash for bidirectional lookup
+    mapping(bytes32 => bytes32) public storageRefToDataHash;
     // Security: Track if address has already accessed data (prevent duplicates)
     mapping(bytes32 => mapping(address => bool)) private hasAccessed;
     // Delegated ownership: owner => delegate => authorized
@@ -49,6 +52,7 @@ contract DataProvenance {
     address public contractAdmin;
 
     event DataRegistered(bytes32 indexed dataHash, address indexed owner, string dataType);
+    event StorageRefLinked(bytes32 indexed dataHash, bytes32 indexed storageRef);
     event DelegateAuthorized(address indexed owner, address indexed delegate, bool authorized);
     event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
     event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
@@ -163,21 +167,15 @@ contract DataProvenance {
     /// @param _dataHash The hash of the data
     /// @param _dataType The type/category of data
     function registerData(bytes32 _dataHash, string memory _dataType) public {
-        require(_dataHash != bytes32(0), "Invalid data hash");
-        require(bytes(_dataType).length > 0, "Data type cannot be empty");
-        require(bytes(_dataType).length <= 64, "Data type too long");
-        require(dataRecords[_dataHash].owner == address(0), "Data already registered");
+        _registerData(_dataHash, _dataType, msg.sender, bytes32(0));
+    }
 
-        DataRecord storage newRecord = dataRecords[_dataHash];
-        newRecord.dataHash = _dataHash;
-        newRecord.owner = msg.sender;
-        newRecord.timestamp = block.timestamp;
-        newRecord.dataType = _dataType;
-        newRecord.status = DataStatus.Active;
-
-        userDataRecords[msg.sender].push(_dataHash);
-
-        emit DataRegistered(_dataHash, msg.sender, _dataType);
+    /// @notice Register new data with a storage reference
+    /// @param _dataHash The hash of the data
+    /// @param _dataType The type/category of data
+    /// @param _storageRef Reference to where the data is stored (e.g. Swarm hash)
+    function registerData(bytes32 _dataHash, string memory _dataType, bytes32 _storageRef) public {
+        _registerData(_dataHash, _dataType, msg.sender, _storageRef);
     }
 
     /// @notice Authorize or revoke a delegate
@@ -206,21 +204,58 @@ contract DataProvenance {
     function registerDataFor(bytes32 _dataHash, string memory _dataType, address _actualOwner) public {
         require(_actualOwner != address(0), "Invalid owner");
         require(authorizedDelegates[_actualOwner][msg.sender], "Not authorized delegate");
+        _registerData(_dataHash, _dataType, _actualOwner, bytes32(0));
+    }
+
+    /// @notice Register data on behalf of another user with a storage reference
+    /// @param _dataHash The hash of the data
+    /// @param _dataType The type/category of data
+    /// @param _actualOwner The actual owner of the data
+    /// @param _storageRef Reference to where the data is stored (e.g. Swarm hash)
+    function registerDataFor(bytes32 _dataHash, string memory _dataType, address _actualOwner, bytes32 _storageRef) public {
+        require(_actualOwner != address(0), "Invalid owner");
+        require(authorizedDelegates[_actualOwner][msg.sender], "Not authorized delegate");
+        _registerData(_dataHash, _dataType, _actualOwner, _storageRef);
+    }
+
+    /// @notice Internal registration logic shared by all registerData variants
+    function _registerData(
+        bytes32 _dataHash,
+        string memory _dataType,
+        address _owner,
+        bytes32 _storageRef
+    ) internal {
         require(_dataHash != bytes32(0), "Invalid data hash");
         require(bytes(_dataType).length > 0, "Data type cannot be empty");
         require(bytes(_dataType).length <= 64, "Data type too long");
         require(dataRecords[_dataHash].owner == address(0), "Data already registered");
+        if (_storageRef != bytes32(0)) {
+            require(_storageRef != _dataHash, "Storage ref cannot equal data hash");
+            require(storageRefToDataHash[_storageRef] == bytes32(0), "Storage ref already mapped");
+            storageRefToDataHash[_storageRef] = _dataHash;
+        }
 
         DataRecord storage newRecord = dataRecords[_dataHash];
         newRecord.dataHash = _dataHash;
-        newRecord.owner = _actualOwner;
+        newRecord.owner = _owner;
         newRecord.timestamp = block.timestamp;
         newRecord.dataType = _dataType;
+        newRecord.storageRef = _storageRef;
         newRecord.status = DataStatus.Active;
 
-        userDataRecords[_actualOwner].push(_dataHash);
+        userDataRecords[_owner].push(_dataHash);
 
-        emit DataRegistered(_dataHash, _actualOwner, _dataType);
+        emit DataRegistered(_dataHash, _owner, _dataType);
+        if (_storageRef != bytes32(0)) {
+            emit StorageRefLinked(_dataHash, _storageRef);
+        }
+    }
+
+    /// @notice Get the data hash associated with a storage reference
+    /// @param _storageRef The storage reference to look up
+    /// @return bytes32 The associated data hash (bytes32(0) if not found)
+    function getDataHashByStorageRef(bytes32 _storageRef) public view returns (bytes32) {
+        return storageRefToDataHash[_storageRef];
     }
 
     /// @notice Record a transformation of data
@@ -463,7 +498,26 @@ contract DataProvenance {
         require(_dataHashes.length == _dataTypes.length, "Array length mismatch");
 
         for (uint256 i = 0; i < _dataHashes.length; i++) {
-            registerData(_dataHashes[i], _dataTypes[i]);
+            _registerData(_dataHashes[i], _dataTypes[i], msg.sender, bytes32(0));
+        }
+    }
+
+    /// @notice Register multiple data items with storage references in a single transaction
+    /// @param _dataHashes Array of data hashes
+    /// @param _dataTypes Array of data types
+    /// @param _storageRefs Array of storage references
+    function batchRegisterData(
+        bytes32[] memory _dataHashes,
+        string[] memory _dataTypes,
+        bytes32[] memory _storageRefs
+    ) public {
+        require(_dataHashes.length > 0, "Empty data hashes array");
+        require(_dataHashes.length <= 50, "Too many data items");
+        require(_dataHashes.length == _dataTypes.length, "Array length mismatch");
+        require(_dataHashes.length == _storageRefs.length, "Storage refs length mismatch");
+
+        for (uint256 i = 0; i < _dataHashes.length; i++) {
+            _registerData(_dataHashes[i], _dataTypes[i], msg.sender, _storageRefs[i]);
         }
     }
 

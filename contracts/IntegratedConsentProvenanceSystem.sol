@@ -81,6 +81,29 @@ contract IntegratedConsentProvenanceSystem {
         emit DataRegisteredWithConsent(_dataHash, msg.sender, _dataType, _consentPurpose);
     }
 
+    /// @notice Register data with consent verification and a storage reference
+    /// @param _dataHash Hash of data to register
+    /// @param _dataType Type of data
+    /// @param _consentPurpose Purpose that must have valid consent
+    /// @param _storageRef Reference to where the data is stored (e.g. Swarm hash)
+    function registerDataWithConsent(
+        bytes32 _dataHash,
+        string memory _dataType,
+        string memory _consentPurpose,
+        bytes32 _storageRef
+    ) public {
+        require(
+            consentContract.getConsentStatus(msg.sender, _consentPurpose),
+            "No valid consent for this purpose"
+        );
+
+        provenanceContract.registerData(_dataHash, _dataType, _storageRef);
+        dataConsentPurpose[_dataHash] = _consentPurpose;
+        userRegisteredData[msg.sender].push(_dataHash);
+
+        emit DataRegisteredWithConsent(_dataHash, msg.sender, _dataType, _consentPurpose);
+    }
+
     /// @notice Register data on behalf of another user (delegated registration)
     /// @param _dataHash Hash of data to register
     /// @param _dataType Type of data
@@ -105,6 +128,38 @@ contract IntegratedConsentProvenanceSystem {
         );
 
         provenanceContract.registerDataFor(_dataHash, _dataType, _actualOwner);
+        dataConsentPurpose[_dataHash] = _consentPurpose;
+        userRegisteredData[_actualOwner].push(_dataHash);
+
+        emit DelegatedDataRegistered(_dataHash, _actualOwner, msg.sender, _dataType, _consentPurpose);
+    }
+
+    /// @notice Register data on behalf of another user with a storage reference
+    /// @param _dataHash Hash of data to register
+    /// @param _dataType Type of data
+    /// @param _consentPurpose Purpose that must have valid consent
+    /// @param _actualOwner The actual owner of the data
+    /// @param _storageRef Reference to where the data is stored (e.g. Swarm hash)
+    function registerDataForWithConsent(
+        bytes32 _dataHash,
+        string memory _dataType,
+        string memory _consentPurpose,
+        address _actualOwner,
+        bytes32 _storageRef
+    ) public {
+        // Verify delegate is authorized by the actual owner
+        require(
+            provenanceContract.isAuthorizedDelegate(_actualOwner, msg.sender),
+            "Not authorized delegate"
+        );
+
+        // Verify the actual owner has valid consent
+        require(
+            consentContract.getConsentStatus(_actualOwner, _consentPurpose),
+            "Owner has no valid consent for this purpose"
+        );
+
+        provenanceContract.registerDataFor(_dataHash, _dataType, _actualOwner, _storageRef);
         dataConsentPurpose[_dataHash] = _consentPurpose;
         userRegisteredData[_actualOwner].push(_dataHash);
 

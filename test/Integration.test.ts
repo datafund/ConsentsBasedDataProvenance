@@ -133,6 +133,46 @@ describe("Integration Tests", function () {
     });
   });
 
+  describe("Storage Reference Bidirectional Lookup", function () {
+    const SWARM_REF = ethers.keccak256(ethers.toUtf8Bytes("swarm_bee_reference"));
+
+    it("should complete register with storageRef -> lookup by storageRef -> verify record", async function () {
+      // Register data with Swarm storage reference
+      await dataProvenance.connect(dataSubject)["registerData(bytes32,string,bytes32)"](
+        DATA_HASH_1, "document", SWARM_REF
+      );
+
+      // Look up by storage reference
+      const foundHash = await dataProvenance.getDataHashByStorageRef(SWARM_REF);
+      expect(foundHash).to.equal(DATA_HASH_1);
+
+      // Get full record from found hash
+      const record = await dataProvenance.getDataRecord(foundHash);
+      expect(record.owner).to.equal(dataSubject.address);
+      expect(record.dataType).to.equal("document");
+      expect(record.storageRef).to.equal(SWARM_REF);
+      expect(record.status).to.equal(0); // Active
+    });
+
+    it("should work with consent system and storageRef", async function () {
+      await consentReceipt.connect(dataSubject)["giveConsent(string)"]("storage");
+
+      await integratedSystem.connect(dataSubject)["registerDataWithConsent(bytes32,string,string,bytes32)"](
+        DATA_HASH_1, "personal", "storage", SWARM_REF
+      );
+
+      // Verify storageRef was propagated through consent system
+      const foundHash = await dataProvenance.getDataHashByStorageRef(SWARM_REF);
+      expect(foundHash).to.equal(DATA_HASH_1);
+
+      const record = await dataProvenance.getDataRecord(DATA_HASH_1);
+      expect(record.storageRef).to.equal(SWARM_REF);
+
+      // Verify consent tracking still works
+      expect(await integratedSystem.getDataConsentPurpose(DATA_HASH_1)).to.equal("storage");
+    });
+  });
+
   describe("Consent Revocation Impact", function () {
     beforeEach(async function () {
       await consentReceipt.connect(dataSubject)["giveConsent(string)"]("marketing");
