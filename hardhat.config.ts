@@ -5,7 +5,9 @@ import "@nomicfoundation/hardhat-ledger";
 import dotenv from "dotenv";
 import { assertMainnetSigningSafe, buildNetworks } from "./config/networks";
 
-dotenv.config();
+// DOTENV_CONFIG_PATH lets tests point this at an empty file so a developer's
+// .env cannot leak into child processes.
+dotenv.config(process.env.DOTENV_CONFIG_PATH ? { path: process.env.DOTENV_CONFIG_PATH } : undefined);
 
 // Mainnet networks (mainnet, gnosis, base) sign only with a Ledger. This runs
 // for the selected network before any task touches it.

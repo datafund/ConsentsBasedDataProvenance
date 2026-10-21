@@ -254,6 +254,11 @@ export interface DeployOptions {
    * set it explicitly to exercise the check on the local network.
    */
   ledgerSigning?: boolean;
+  /**
+   * Require MAINNET_SAFE_OWNERS and an exact owner match. Defaults to true on
+   * mainnet networks: VERSION() can be faked, the owner list cannot.
+   */
+  requireSafeOwners?: boolean;
   displayUi?: boolean;
   log?: (msg: string) => void;
 }
@@ -292,7 +297,14 @@ export async function deployWithSafeHandoff(
   // there is nowhere to hand admin rights.
   assertModuleHasAdminFutures(opts.ignitionModule);
   const safe = getMainnetSafeAddress(opts.env);
-  const safeInfo = await checkSafe(hre, safe, expectedSafeOwners(opts.env));
+  const owners = expectedSafeOwners(opts.env);
+  if ((opts.requireSafeOwners ?? mainnet) && !owners) {
+    throw new Error(
+      "Refusing to deploy to mainnet: MAINNET_SAFE_OWNERS is not set. List the Safe's expected owner " +
+        "addresses (comma-separated) so a wrong or look-alike Safe is caught before deploying."
+    );
+  }
+  const safeInfo = await checkSafe(hre, safe, owners);
 
   let deployer: Signer;
   if (opts.ledgerSigning ?? mainnet) {

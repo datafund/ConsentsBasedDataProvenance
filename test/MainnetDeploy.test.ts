@@ -72,7 +72,7 @@ describe("Mainnet deployment", function () {
       ]) {
         // A value that is not key-shaped, so only the name can trigger the refusal.
         expect(() => assertMainnetSigningSafe("mainnet", cfg, { [name]: "word word word" }), name).to.throw(
-          new RegExp(`plaintext signing secrets.*${name}`)
+          new RegExp(`may hold a plaintext signing key.*${name}`)
         );
       }
       for (const name of Object.keys(MAINNET_NETWORKS)) {
@@ -80,17 +80,63 @@ describe("Mainnet deployment", function () {
           assertMainnetSigningSafe(name, { chainId: MAINNET_NETWORKS[name].chainId, accounts: "remote" }, {
             MAINNET_DEPLOYER_PRIVATE_KEY: TEST_KEY,
           })
-        ).to.throw(/plaintext signing secrets/);
+        ).to.throw(/may hold a plaintext signing key/);
       }
     });
 
     it("refuses a key-shaped value under any non-testnet name", function () {
       expect(() =>
         assertMainnetSigningSafe("mainnet", { chainId: 1, accounts: "remote" }, { SOMETHING: TEST_KEY })
-      ).to.throw(/plaintext signing secrets.*SOMETHING/);
+      ).to.throw(/may hold a plaintext signing key.*SOMETHING/);
       expect(() =>
         assertMainnetSigningSafe("mainnet", { chainId: 1, accounts: "remote" }, { testnet_deployer_private_key: TEST_KEY })
       ).to.not.throw();
+    });
+
+    it("fails closed on 32-byte hex values, with an explicit MAINNET_ALLOW_ENV escape hatch", function () {
+      const cfg = { chainId: 1, accounts: "remote" as const };
+      const hexNames = ["DEPLOY_SALT", "CREATE2_SALT", "INIT_CODE_HASH", "SAFE_TX_HASH", "EXPECTED_BYTECODE_HASH", "GIT_SHA256"];
+      const env: Record<string, string> = {};
+      for (const n of hexNames) env[n] = TEST_KEY;
+      // Refused by default, and the error says why.
+      expect(() => assertMainnetSigningSafe("mainnet", cfg, env)).to.throw(
+        /name looks like a signing key, or the value is 32 bytes of hex\): CREATE2_SALT, DEPLOY_SALT, EXPECTED_BYTECODE_HASH, GIT_SHA256, INIT_CODE_HASH, SAFE_TX_HASH\..*MAINNET_ALLOW_ENV/
+      );
+      // Allowed once listed (case-insensitive, spaces ignored).
+      expect(() =>
+        assertMainnetSigningSafe("mainnet", cfg, { ...env, MAINNET_ALLOW_ENV: hexNames.join(" , ").toLowerCase() })
+      ).to.not.throw();
+      // Listing only some leaves the rest refused.
+      expect(() =>
+        assertMainnetSigningSafe("mainnet", cfg, { ...env, MAINNET_ALLOW_ENV: "DEPLOY_SALT" })
+      ).to.throw(/: CREATE2_SALT, EXPECTED_BYTECODE_HASH/);
+      // Non-core key-ish names can be allowed too.
+      expect(() =>
+        assertMainnetSigningSafe("mainnet", cfg, { DEPLOYER_KEY: "x", MAINNET_ALLOW_ENV: "DEPLOYER_KEY" })
+      ).to.not.throw();
+    });
+
+    it("never lets MAINNET_ALLOW_ENV exempt private-key, mnemonic or seed names", function () {
+      const cfg = { chainId: 1, accounts: "remote" as const };
+      for (const name of ["MAINNET_PRIVATE_KEY", "PRIVATE_KEY", "my_privkey", "MNEMONIC", "SEED_PHRASE", "GPG_PRIVKEY_ID"]) {
+        expect(() =>
+          assertMainnetSigningSafe("mainnet", cfg, { [name]: TEST_KEY, MAINNET_ALLOW_ENV: name }), name
+        ).to.throw(new RegExp(`may hold a plaintext signing key.*${name}`));
+      }
+    });
+
+    it("does not flag *_PATH or *_ID names by name alone, but still checks their values", function () {
+      const cfg = { chainId: 1, accounts: "remote" as const };
+      expect(() =>
+        assertMainnetSigningSafe("mainnet", cfg, {
+          SSH_PRIVATE_KEY_PATH: "/home/me/.ssh/id_ed25519",
+          GPG_PRIVKEY_ID: "ABCDEF0123456789",
+          KMS_SIGNER_KEY_ID: "arn:aws:kms:eu-central-1:000000000000:key/abc",
+        })
+      ).to.not.throw();
+      expect(() => assertMainnetSigningSafe("mainnet", cfg, { KMS_SIGNER_KEY_ID: TEST_KEY })).to.throw(
+        /may hold a plaintext signing key.*KMS_SIGNER_KEY_ID/
+      );
     });
 
     it("refuses a mainnet network configured with local accounts, even under another name", function () {
@@ -154,8 +200,13 @@ describe("Mainnet deployment", function () {
         // no device attached) against it with --network mainnet.
         const env: Record<string, string> = {};
         for (const [k, v] of Object.entries(process.env)) {
-          if (v !== undefined && !/KEY|MNEMONIC|SEED|MAINNET_/i.test(k)) env[k] = v;
+          if (v === undefined) continue;
+          if (/KEY|MNEMONIC|SEED|MAINNET_/i.test(k)) continue;
+          if (/^(0x)?[0-9a-fA-F]{64}$/.test(v.trim())) continue;
+          env[k] = v;
         }
+        // Keep the repo's .env out of the child (hardhat.config honours this).
+        env.DOTENV_CONFIG_PATH = "/dev/null";
         env.MAINNET_ETHEREUM_RPC_URL = `http://127.0.0.1:${port}`;
         env.MAINNET_DEPLOYER_ADDRESS = LEDGER_ADDR;
         const { stdout } = await promisify(execFile)(
@@ -308,6 +359,22 @@ describe("Mainnet deployment", function () {
       const owners = [signers[7].address.toLowerCase(), signers[5].address, signers[6].address].join(",");
       const ok = await deployWithSafeHandoff(hre, { ...base, env: { MAINNET_SAFE_ADDRESS: safe, MAINNET_SAFE_OWNERS: owners } });
       expect(ok.safeInfo.version).to.equal("1.4.1");
+    });
+
+    it("on the mainnet path, refuses without MAINNET_SAFE_OWNERS, before sending anything", async function () {
+      const [deployer] = await ethers.getSigners();
+      const safe = await deploySafe(2);
+      const nonceBefore = await ethers.provider.getTransactionCount(deployer.address);
+      await expect(
+        deployWithSafeHandoff(hre, {
+          ignitionModule: ConsentSystemV3,
+          env: { MAINNET_SAFE_ADDRESS: safe },
+          requireMainnet: false,
+          requireSafeOwners: true,
+          log: quiet,
+        })
+      ).to.be.rejectedWith(/MAINNET_SAFE_OWNERS is not set/);
+      expect(await ethers.provider.getTransactionCount(deployer.address)).to.equal(nonceBefore);
     });
 
     it("refuses a module that does not return the admin-bearing contracts, before deploying", async function () {

@@ -14,7 +14,7 @@ Network: ______  Chain ID: ______  Ignition module: ______  Commit: ______
 - [ ] At least `threshold` Safe signers are available on launch day to act on follow-up transactions.
 - [ ] Ledger: firmware and Ethereum app up to date, blind signing enabled, device unlocked with the Ethereum app open.
 - [ ] `MAINNET_DEPLOYER_ADDRESS` is the Ledger account (checked on the device screen) and is funded for 9 deployments plus 4 hand-off transactions. Balance: ______
-- [ ] `MAINNET_SAFE_ADDRESS`, `MAINNET_SAFE_OWNERS`, `MAINNET_IGNITION_MODULE` and the RPC URL are set. The RPC answers `eth_accounts`. No `*_PRIVATE_KEY`, `*_MNEMONIC` or `*_SEED_PHRASE` variable other than `TESTNET_DEPLOYER_PRIVATE_KEY` is set.
+- [ ] `MAINNET_SAFE_ADDRESS`, `MAINNET_SAFE_OWNERS`, `MAINNET_IGNITION_MODULE` and the RPC URL are set. The RPC answers `eth_accounts`. Apart from `TESTNET_DEPLOYER_PRIVATE_KEY`, nothing is set whose name contains `PRIVATE_KEY`, `PRIVKEY`, `MNEMONIC`, `SEED_PHRASE`, `DEPLOYER_KEY`, `SIGNER_KEY` or `WALLET_KEY` (in any case, except `_PATH`/`_ID` names), and nothing holds a 32-byte hex value, unless it is checked and listed in `MAINNET_ALLOW_ENV`.
 - [ ] `ignition/deployments/chain-<chainId>/` does not exist yet (fresh deploy), or you intend to resume it.
 - [ ] Explorer API key set if deploying to Ethereum mainnet (`ETHERSCAN_API_KEY`).
 

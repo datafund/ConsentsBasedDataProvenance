@@ -68,9 +68,15 @@ const MAINNET_CHAIN_IDS = new Set(
 
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const PRIVATE_KEY_RE = /^(0x)?[0-9a-fA-F]{64}$/;
-// Environment variable names that suggest a signing secret (any case, anywhere
-// in the name), e.g. MAINNET_PRIVATE_KEY, private_key_mainnet, DEPLOYER_KEY.
-const SECRET_NAME_RE = /(PRIV(ATE)?_?KEY|MNEMONIC|SEED_?PHRASE|(DEPLOYER|SIGNER|WALLET)_?KEY)/i;
+// Names that say "this is a private key / mnemonic / seed" (any case, anywhere
+// in the name), e.g. MAINNET_PRIVATE_KEY, private_key_mainnet. These can never
+// be exempted with MAINNET_ALLOW_ENV.
+const CORE_SECRET_NAME_RE = /(PRIV(ATE)?_?KEY|MNEMONIC|SEED_?PHRASE)/i;
+// Names that often hold a key but may not, e.g. DEPLOYER_KEY, SIGNER_KEY.
+const OTHER_SECRET_NAME_RE = /(DEPLOYER|SIGNER|WALLET)_?KEY/i;
+// A *_PATH or *_ID name points at a key (a file, a KMS key ID) rather than
+// holding one, so the name alone is not flagged; its value is still checked.
+const REFERENCE_NAME_RE = /_(PATH|ID)$/i;
 const TESTNET_PREFIX_RE = /^TESTNET_/i;
 
 /** A network is mainnet if its name or its chain ID is a known mainnet. */
@@ -82,17 +88,36 @@ export function isMainnetNetwork(name: string, chainId?: number): boolean {
 }
 
 /**
+ * Names from MAINNET_ALLOW_ENV (comma-separated): variables the operator has
+ * confirmed are not keys, e.g. a 32-byte DEPLOY_SALT. Names matching the core
+ * private-key / mnemonic / seed patterns are never exempt, even if listed.
+ */
+export function mainnetAllowedEnvNames(env: Env): Set<string> {
+  return new Set(
+    (env.MAINNET_ALLOW_ENV ?? "")
+      .split(",")
+      .map((n) => n.trim().toUpperCase())
+      .filter((n) => n !== "" && !CORE_SECRET_NAME_RE.test(n))
+  );
+}
+
+/**
  * Names of environment variables that hold, or look like they hold, a
- * plaintext signing secret and are not namespaced to testnets: either the name
- * suggests a key/mnemonic, or the value is 32 bytes of hex (a private key).
- * Any of these present while targeting mainnet is refused: mainnet keys must
- * never live in a plaintext file. Only names are returned, never values.
+ * plaintext signing key and are not namespaced to testnets: the name looks
+ * like a signing key, or the value is 32 bytes of hex. Fails closed: false
+ * positives (e.g. a CREATE2 salt) must be exempted explicitly with
+ * MAINNET_ALLOW_ENV. Only names are returned, never values.
  */
 export function findPlaintextMainnetSecrets(env: Env): string[] {
+  const allowed = mainnetAllowedEnvNames(env);
+  const nameLooksLikeKey = (name: string) =>
+    !REFERENCE_NAME_RE.test(name) && (CORE_SECRET_NAME_RE.test(name) || OTHER_SECRET_NAME_RE.test(name));
   return Object.keys(env)
     .filter((name) => !TESTNET_PREFIX_RE.test(name))
+    .filter((name) => name.toUpperCase() !== "MAINNET_ALLOW_ENV")
     .filter((name) => (env[name] ?? "").trim() !== "")
-    .filter((name) => SECRET_NAME_RE.test(name) || PRIVATE_KEY_RE.test((env[name] ?? "").trim()))
+    .filter((name) => nameLooksLikeKey(name) || PRIVATE_KEY_RE.test((env[name] ?? "").trim()))
+    .filter((name) => !allowed.has(name.toUpperCase()))
     .sort();
 }
 
@@ -187,9 +212,11 @@ export function assertMainnetSigningSafe(
   const secrets = findPlaintextMainnetSecrets(env);
   if (secrets.length > 0) {
     throw new Error(
-      `Refusing to use mainnet network "${networkName}": plaintext signing secrets are set in the environment ` +
-        `(${secrets.join(", ")}). Mainnet deploys sign with a Ledger via MAINNET_DEPLOYER_ADDRESS. ` +
-        `Remove these variables from your shell and .env.`
+      `Refusing to use mainnet network "${networkName}": these environment variables may hold a plaintext ` +
+        `signing key (name looks like a signing key, or the value is 32 bytes of hex): ${secrets.join(", ")}. ` +
+        `Mainnet deploys sign with a Ledger via MAINNET_DEPLOYER_ADDRESS. Remove them from your shell and .env. ` +
+        `If one is not a key (e.g. a salt or hash), list it in MAINNET_ALLOW_ENV=NAME1,NAME2; names containing ` +
+        `PRIVATE_KEY, PRIVKEY, MNEMONIC or SEED_PHRASE can never be allowed.`
     );
   }
 
