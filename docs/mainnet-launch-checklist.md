@@ -14,13 +14,13 @@ Network: ______  Chain ID: ______  Ignition module: ______  Commit: ______
 - [ ] At least `threshold` Safe signers are available on launch day to act on follow-up transactions.
 - [ ] Ledger: firmware and Ethereum app up to date, blind signing enabled, device unlocked with the Ethereum app open.
 - [ ] `MAINNET_DEPLOYER_ADDRESS` is the Ledger account (checked on the device screen) and is funded for 9 deployments plus 4 hand-off transactions. Balance: ______
-- [ ] `MAINNET_SAFE_ADDRESS`, `MAINNET_IGNITION_MODULE` and the RPC URL are set. No `*_PRIVATE_KEY`, `*_MNEMONIC` or `*_SEED_PHRASE` variable other than `TESTNET_DEPLOYER_PRIVATE_KEY` is set.
+- [ ] `MAINNET_SAFE_ADDRESS`, `MAINNET_SAFE_OWNERS`, `MAINNET_IGNITION_MODULE` and the RPC URL are set. The RPC answers `eth_accounts`. No `*_PRIVATE_KEY`, `*_MNEMONIC` or `*_SEED_PHRASE` variable other than `TESTNET_DEPLOYER_PRIVATE_KEY` is set.
 - [ ] `ignition/deployments/chain-<chainId>/` does not exist yet (fresh deploy), or you intend to resume it.
 - [ ] Explorer API key set if deploying to Ethereum mainnet (`ETHERSCAN_API_KEY`).
 
 ## Deploying
 
-- [ ] `npm run deploy:mainnet:<network>` started from the host, not Docker.
+- [ ] `npm run deploy:mainnet:<network>` started from the host, not Docker. Not `hardhat ignition deploy` directly, which skips the hand-off.
 - [ ] Every transaction checked on the Ledger screen before confirming.
 - [ ] Script finished and printed the admin read-back with no `Post-deploy checks failed` line.
 
@@ -37,6 +37,7 @@ Read these on the explorer's "Read Contract" tab, not only from the script outpu
 
 - [ ] DataProvenance `hasRole(ADMIN_ROLE, <Safe>)` is `true`.
 - [ ] DataProvenance `hasRole(ADMIN_ROLE, <deployer>)` is `false`, and `getRoleMemberCount(ADMIN_ROLE)` is `1`.
+- [ ] DataProvenance `hasRole(OPERATOR_ROLE, <deployer>)` and `hasRole(AUDITOR_ROLE, <deployer>)` are `false`, and `getRoleMemberCount` for both roles is `0` (before the Safe grants any).
 - [ ] PurposeRegistry `admin()` is the Safe.
 - [ ] ConsentAuditLog `admin()` is the Safe.
 - [ ] Noted: DataProvenance `contractAdmin()` still shows the deployer. It is informational only and grants nothing.

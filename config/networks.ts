@@ -56,7 +56,8 @@ export const MAINNET_NETWORKS: Record<string, NetworkMeta> = {
   base: {
     chainId: 8453,
     rpcEnv: "MAINNET_BASE_RPC_URL",
-    defaultRpc: "https://mainnet.base.org",
+    // mainnet.base.org rejects eth_accounts, which hardhat-ledger needs.
+    defaultRpc: "https://base-rpc.publicnode.com",
     explorer: "https://base.blockscout.com",
   },
 };
@@ -67,8 +68,10 @@ const MAINNET_CHAIN_IDS = new Set(
 
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const PRIVATE_KEY_RE = /^(0x)?[0-9a-fA-F]{64}$/;
-// Environment variable names that hold signing secrets.
-const SECRET_NAME_RE = /(PRIVATE_KEY|MNEMONIC|SEED_PHRASE)$/;
+// Environment variable names that suggest a signing secret (any case, anywhere
+// in the name), e.g. MAINNET_PRIVATE_KEY, private_key_mainnet, DEPLOYER_KEY.
+const SECRET_NAME_RE = /(PRIV(ATE)?_?KEY|MNEMONIC|SEED_?PHRASE|(DEPLOYER|SIGNER|WALLET)_?KEY)/i;
+const TESTNET_PREFIX_RE = /^TESTNET_/i;
 
 /** A network is mainnet if its name or its chain ID is a known mainnet. */
 export function isMainnetNetwork(name: string, chainId?: number): boolean {
@@ -79,15 +82,17 @@ export function isMainnetNetwork(name: string, chainId?: number): boolean {
 }
 
 /**
- * Names of environment variables holding a plaintext signing secret that is
- * not namespaced to testnets. Any of these present while targeting mainnet is
- * refused: mainnet keys must never live in a plaintext file.
+ * Names of environment variables that hold, or look like they hold, a
+ * plaintext signing secret and are not namespaced to testnets: either the name
+ * suggests a key/mnemonic, or the value is 32 bytes of hex (a private key).
+ * Any of these present while targeting mainnet is refused: mainnet keys must
+ * never live in a plaintext file. Only names are returned, never values.
  */
 export function findPlaintextMainnetSecrets(env: Env): string[] {
   return Object.keys(env)
-    .filter((name) => SECRET_NAME_RE.test(name))
-    .filter((name) => !name.startsWith("TESTNET_"))
+    .filter((name) => !TESTNET_PREFIX_RE.test(name))
     .filter((name) => (env[name] ?? "").trim() !== "")
+    .filter((name) => SECRET_NAME_RE.test(name) || PRIVATE_KEY_RE.test((env[name] ?? "").trim()))
     .sort();
 }
 
@@ -156,8 +161,11 @@ export function buildNetworks(env: Env): NetworksUserConfig {
     networks[name] = {
       url: env[meta.rpcEnv] || meta.defaultRpc,
       chainId: meta.chainId,
-      // No local keys, ever. Signing happens on the Ledger device.
-      accounts: [],
+      // No local keys, ever: signing happens on the Ledger device.
+      // `accounts` is deliberately omitted (Hardhat's default "remote"). Any
+      // array, even [], makes Hardhat wrap a LocalAccountsProvider OUTSIDE
+      // hardhat-ledger's provider, which hides the Ledger account (eth_accounts
+      // returns []) and sends fail with HH103.
       ledgerAccounts,
     };
   }
@@ -186,12 +194,11 @@ export function assertMainnetSigningSafe(
   }
 
   const accounts = networkConfig.accounts as unknown;
-  const noLocalAccounts =
-    accounts === "remote" || (Array.isArray(accounts) && accounts.length === 0);
-  if (!noLocalAccounts) {
+  if (accounts !== undefined && accounts !== "remote") {
     throw new Error(
-      `Refusing to use mainnet network "${networkName}": it is configured with local accounts ` +
-        `(a private key or mnemonic). Mainnet networks must set accounts: [] and sign via ledgerAccounts.`
+      `Refusing to use mainnet network "${networkName}": it sets \`accounts\` (a key list, an empty list, ` +
+        `or a mnemonic). Mainnet networks must leave accounts unset and sign via ledgerAccounts; ` +
+        `even accounts: [] hides the Ledger account from Hardhat.`
     );
   }
 }
