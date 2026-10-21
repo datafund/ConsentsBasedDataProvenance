@@ -1,0 +1,93 @@
+# Mainnet deployment
+
+Mainnet deploys differ from testnet deploys in three ways:
+
+| | Testnets (`sepolia`, `chiado`, `baseSepolia`) | Mainnets (`mainnet`, `gnosis`, `base`) |
+|---|---|---|
+| Signing | Plaintext key in `TESTNET_DEPLOYER_PRIVATE_KEY` | Ledger hardware wallet, address in `MAINNET_DEPLOYER_ADDRESS` |
+| Entry point | `npx hardhat ignition deploy ... --network <testnet>` | `npm run deploy:mainnet:<ethereum\|gnosis\|base>` |
+| Admin rights after deploy | Stay with the deployer | Moved to a Gnosis Safe (`MAINNET_SAFE_ADDRESS`) before the script finishes |
+
+Use [`mainnet-launch-checklist.md`](mainnet-launch-checklist.md) when doing a real launch.
+
+## What the config enforces
+
+These checks live in [`config/networks.ts`](../config/networks.ts) and run every time Hardhat starts with a mainnet network selected. A network counts as mainnet if its name is `mainnet`, `gnosis` or `base`, or if its chain ID is 1, 100 or 8453 (so a renamed copy of a mainnet network is still checked).
+
+- **No plaintext keys on mainnet.** Mainnet networks are defined with `accounts: []` and sign only through `ledgerAccounts` (`@nomicfoundation/hardhat-ledger`). If a mainnet network is configured with a key or mnemonic, Hardhat refuses to start.
+- **Separate variables.** Mainnet networks never read `TESTNET_DEPLOYER_PRIVATE_KEY`. If any variable ending in `PRIVATE_KEY`, `MNEMONIC` or `SEED_PHRASE` that does not start with `TESTNET_` is set (for example `MAINNET_DEPLOYER_PRIVATE_KEY` or `PRIVATE_KEY`), Hardhat refuses every mainnet network until you remove it.
+- **Address, not key.** `MAINNET_DEPLOYER_ADDRESS` must be a 20-byte address. If it holds a 32-byte value (a private key pasted into the wrong variable), Hardhat refuses to load at all. Treat that key as leaked.
+
+`test/MainnetDeploy.test.ts` covers each of these.
+
+## What the deploy script does
+
+[`scripts/deploy-mainnet.ts`](../scripts/deploy-mainnet.ts) runs these steps in order. Every check in steps 1 to 4 happens before the first transaction, so a misconfigured run costs nothing.
+
+1. Refuses anything that is not a mainnet network.
+2. Refuses if `MAINNET_SAFE_ADDRESS` is unset or malformed.
+3. Reads the Safe on the target chain: it must have contract code, answer `getOwners()` and `getThreshold()`, and have a threshold of at least 2.
+4. Checks that the signer is the Ledger account in `MAINNET_DEPLOYER_ADDRESS`, and that it is not the Safe.
+5. Deploys the Ignition module in `MAINNET_IGNITION_MODULE`. The deployment ID is `chain-<chainId>`, the same as the Ignition CLI uses, so an interrupted run resumes when re-run.
+6. Hands every admin right to the Safe (see the table below). Steps already done are skipped, so re-running is safe.
+7. Reads back the result and fails loudly if any check does not hold.
+
+### Admin rights that move to the Safe
+
+| Contract | Admin right | Hand-off |
+|---|---|---|
+| DataProvenance | `ADMIN_ROLE` (grants and revokes `OPERATOR_ROLE` and `AUDITOR_ROLE`) | `grantRole(ADMIN_ROLE, safe)`, then the deployer calls `renounceRole(ADMIN_ROLE)`. The Safe always gets the role before the deployer gives it up. |
+| PurposeRegistry | `admin` (register, deactivate and reactivate purposes) | `transferAdmin(safe)` |
+| ConsentAuditLog | `admin` (authorize audit recorders) | `transferAdmin(safe)` |
+
+ConsentReceipt, KantaraConsentReceipt, ConsentProxy, DataAccessControl, DataDeletion and IntegratedConsentProvenanceSystem have no admin role.
+
+`DataProvenance.contractAdmin()` keeps returning the deployer address after the hand-off. It is set once in the constructor and not used for any access check, so it does not grant anything. Check `hasRole(ADMIN_ROLE, ...)` instead.
+
+After the hand-off, granting `OPERATOR_ROLE` or `AUDITOR_ROLE`, registering purposes and authorizing audit recorders all go through Safe transactions.
+
+## One-time setup
+
+1. **Ledger.** Install the Ethereum app, and enable "Blind signing" (called "Contract data" on older firmware) in its settings: contract deployments cannot be clear-signed. Connect the device over USB, unlock it, and open the Ethereum app before running any command. Linux needs udev rules for Ledger devices.
+2. **Deployer address.** Note the Ledger account address you will deploy from (default derivation path `m/44'/60'/0'/0/0`), fund it with enough native gas token for 9 contract deployments plus 4 hand-off transactions on the target chain, and set it as `MAINNET_DEPLOYER_ADDRESS`.
+3. **Safe.** Create a Safe on the target chain (https://app.safe.global) with a threshold of at least 2. A Safe address is per chain: check that the Safe exists on the chain you are deploying to. Set `MAINNET_SAFE_ADDRESS`.
+4. **Module.** Set `MAINNET_IGNITION_MODULE` to the module to deploy, for example `ignition/modules/ConsentSystemV3.ts`. There is deliberately no default.
+5. **RPC.** Optionally set `MAINNET_ETHEREUM_RPC_URL`, `MAINNET_GNOSIS_RPC_URL` or `MAINNET_BASE_RPC_URL` to a dedicated provider. The public defaults work but can rate-limit.
+6. Make sure no `*_PRIVATE_KEY`, `*_MNEMONIC` or `*_SEED_PHRASE` variable other than `TESTNET_DEPLOYER_PRIVATE_KEY` is set in your shell or `.env`.
+
+These variables are not secret, but keep them out of git anyway: `.env` is gitignored.
+
+## Deploying
+
+Run on the host, not in Docker: the container has no access to the USB device.
+
+```bash
+npx hardhat compile
+npx hardhat test
+npm run deploy:mainnet:gnosis      # or deploy:mainnet:ethereum / deploy:mainnet:base
+```
+
+Confirm each transaction on the Ledger screen. Check the recipient and data before confirming. Expect 9 deployments followed by up to 4 hand-off transactions.
+
+If the run stops part-way (a rejected confirmation, a nonce error, a dropped RPC), run the same command again. Ignition resumes the deployment from `ignition/deployments/chain-<chainId>/`, and the hand-off skips steps already done.
+
+The script ends by printing the read-back of every admin right. If it prints `Post-deploy checks failed`, do not announce the deployment: fix the failed item first.
+
+## After deploying
+
+```bash
+npm run post-deploy                                                  # deployments.md and dist/abis/
+npx hardhat ignition verify chain-<chainId> --network <network>      # source verification
+```
+
+Ethereum mainnet verification goes through Etherscan and needs `ETHERSCAN_API_KEY`. Gnosis and Base verify through Blockscout with no key.
+
+Then follow the post-deploy section of the [launch checklist](mainnet-launch-checklist.md), and commit `ignition/deployments/chain-<chainId>/deployed_addresses.json`, `deployments.md` and `dist/abis/` as described in `CLAUDE.md`.
+
+## Upgradeable contracts (issue #7)
+
+The contracts are not upgradeable yet. Issue #7 plans to put them behind UUPS proxies. This flow is meant to keep working when that lands:
+
+- The hand-off works on contract addresses, not on how they were deployed. A proxy-based Ignition module only has to return futures named `dataProvenance`, `purposeRegistry` and `consentAuditLog` that point at the proxies (the addresses users call). Point `MAINNET_IGNITION_MODULE` at it.
+- In the #7 design, `_authorizeUpgrade` checks `ADMIN_ROLE`. Moving `ADMIN_ROLE` to the Safe therefore also puts upgrade authority with the Safe, and the read-back already checks that the deployer no longer holds it.
+- If #7 adds a new kind of privileged role (for example a separate upgrader role, or `ADMIN_ROLE` on more contracts), add it to `handOffAdmin` and `verifyHandoff` in `scripts/lib/mainnet-deploy.ts`, with a test.

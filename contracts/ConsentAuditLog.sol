@@ -33,6 +33,7 @@ contract ConsentAuditLog {
 
     event AuditRecorded(uint256 indexed entryIndex, AuditAction indexed action, address indexed actor, bytes32 subjectId);
     event RecorderAuthorized(address indexed recorder, bool authorized);
+    event AdminTransferred(address indexed previousAdmin, address indexed newAdmin);
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "Not admin");
@@ -46,6 +47,14 @@ contract ConsentAuditLog {
 
     constructor() {
         admin = msg.sender;
+    }
+
+    /// @notice Hand admin rights to a new address (e.g. a multisig after deploy)
+    /// @param _newAdmin New admin address
+    function transferAdmin(address _newAdmin) external onlyAdmin {
+        require(_newAdmin != address(0), "Invalid admin");
+        emit AdminTransferred(admin, _newAdmin);
+        admin = _newAdmin;
     }
 
     function setAuthorizedRecorder(address _recorder, bool _authorized) external onlyAdmin {

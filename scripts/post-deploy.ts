@@ -14,6 +14,18 @@ const NETWORK_META: Record<string, { name: string; explorer: string }> = {
     name: "Base Sepolia",
     explorer: "https://base-sepolia.blockscout.com",
   },
+  "1": {
+    name: "Ethereum",
+    explorer: "https://etherscan.io",
+  },
+  "100": {
+    name: "Gnosis",
+    explorer: "https://gnosis.blockscout.com",
+  },
+  "8453": {
+    name: "Base",
+    explorer: "https://base.blockscout.com",
+  },
 };
 
 interface DeployedAddresses {

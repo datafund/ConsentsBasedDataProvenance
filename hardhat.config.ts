@@ -1,13 +1,17 @@
-import { HardhatUserConfig } from "hardhat/config";
+import { HardhatUserConfig, extendEnvironment } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-ignition-ethers";
+import "@nomicfoundation/hardhat-ledger";
 import dotenv from "dotenv";
+import { assertMainnetSigningSafe, buildNetworks } from "./config/networks";
 
 dotenv.config();
 
-const deployerKey = process.env.TESTNET_DEPLOYER_PRIVATE_KEY
-  ? [process.env.TESTNET_DEPLOYER_PRIVATE_KEY]
-  : [];
+// Mainnet networks (mainnet, gnosis, base) sign only with a Ledger. This runs
+// for the selected network before any task touches it.
+extendEnvironment((hre) => {
+  assertMainnetSigningSafe(hre.network.name, hre.network.config, process.env);
+});
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -19,35 +23,15 @@ const config: HardhatUserConfig = {
       },
     },
   },
-  networks: {
-    hardhat: {
-      chainId: 31337,
-    },
-    localhost: {
-      url: "http://127.0.0.1:8545",
-      chainId: 31337,
-    },
-    sepolia: {
-      url: process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
-      chainId: 11155111,
-      accounts: deployerKey,
-    },
-    chiado: {
-      url: process.env.CHIADO_RPC_URL || "https://rpc.chiadochain.net",
-      chainId: 10200,
-      accounts: deployerKey,
-    },
-    baseSepolia: {
-      url: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
-      chainId: 84532,
-      accounts: deployerKey,
-    },
-  },
+  networks: buildNetworks(process.env),
   etherscan: {
     apiKey: {
       sepolia: process.env.ETHERSCAN_API_KEY || "",
       chiado: "no-api-key-needed",
       baseSepolia: process.env.BASESCAN_API_KEY || "no-api-key-needed",
+      mainnet: process.env.ETHERSCAN_API_KEY || "",
+      gnosis: "no-api-key-needed",
+      base: "no-api-key-needed",
     },
     customChains: [
       {
@@ -64,6 +48,22 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://base-sepolia.blockscout.com/api",
           browserURL: "https://base-sepolia.blockscout.com",
+        },
+      },
+      {
+        network: "gnosis",
+        chainId: 100,
+        urls: {
+          apiURL: "https://gnosis.blockscout.com/api",
+          browserURL: "https://gnosis.blockscout.com",
+        },
+      },
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://base.blockscout.com/api",
+          browserURL: "https://base.blockscout.com",
         },
       },
     ],

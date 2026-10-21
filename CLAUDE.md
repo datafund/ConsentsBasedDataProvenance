@@ -84,7 +84,7 @@ The Ignition module deploys all 9 contracts with proper dependency ordering:
 - **Tier 2** (needs DataProvenance): DataAccessControl, DataDeletion
 - **Tier 3** (needs ConsentReceipt + DataProvenance): IntegratedConsentProvenanceSystem
 
-**Configured testnets**: Sepolia (chainId 11155111), Gnosis Chiado (10200), Base Sepolia (84532). Copy `.env.example` to `.env` and set `TESTNET_DEPLOYER_PRIVATE_KEY` before deploying. This key is for testnets only — mainnet deployments will require a more robust approach (hardware wallet, multisig, or KMS).
+**Configured testnets**: Sepolia (chainId 11155111), Gnosis Chiado (10200), Base Sepolia (84532). Copy `.env.example` to `.env` and set `TESTNET_DEPLOYER_PRIVATE_KEY` before deploying. This key is for testnets only: mainnet networks (`mainnet`, `gnosis`, `base`) never read it, refuse plaintext keys, sign with a Ledger, and hand admin rights to a Gnosis Safe. See [`docs/mainnet-deployment.md`](docs/mainnet-deployment.md) and [`docs/mainnet-launch-checklist.md`](docs/mainnet-launch-checklist.md).
 
 A standalone `ignition/modules/DataProvenance.ts` module is also available for deploying just DataProvenance.
 
