@@ -70,7 +70,8 @@ describe("Mainnet deployment", function () {
         "PRIVATE_KEY_MAINNET",
         "SEED_PHRASE",
       ]) {
-        expect(() => assertMainnetSigningSafe("mainnet", cfg, { [name]: TEST_KEY }), name).to.throw(
+        // A value that is not key-shaped, so only the name can trigger the refusal.
+        expect(() => assertMainnetSigningSafe("mainnet", cfg, { [name]: "word word word" }), name).to.throw(
           new RegExp(`plaintext signing secrets.*${name}`)
         );
       }
