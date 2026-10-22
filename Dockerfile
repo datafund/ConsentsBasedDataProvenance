@@ -2,8 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Install build dependencies for native modules (linux-headers, eudev-dev and
+# libusb-dev are needed to build node-hid, pulled in by @nomicfoundation/hardhat-ledger)
+RUN apk add --no-cache python3 make g++ linux-headers eudev-dev libusb-dev
 
 # Copy package files
 COPY package.json ./

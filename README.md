@@ -783,6 +783,10 @@ Ignition deploys all 9 contracts in dependency order:
 
 Deployed addresses are saved to `ignition/deployments/chain-<chainId>/deployed_addresses.json` and a human-readable summary is auto-generated at [`deployments.md`](deployments.md).
 
+### Mainnet Deployment
+
+Mainnets (**Ethereum**, **Gnosis**, **Base**) use a separate flow: signing on a Ledger hardware wallet (no plaintext keys; Hardhat refuses to start a mainnet network if one is set), and every admin right handed to a Gnosis Safe multisig before the deploy script finishes. See [`docs/mainnet-deployment.md`](docs/mainnet-deployment.md) and the [launch checklist](docs/mainnet-launch-checklist.md).
+
 ### Contract Verification
 
 Contracts can be verified on Blockscout (no API key needed) — verification is manual, not automatic. Base Sepolia and Chiado use Blockscout. Sepolia uses Etherscan (requires `ETHERSCAN_API_KEY`).
