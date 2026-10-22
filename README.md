@@ -557,6 +557,24 @@ npx hardhat test test/Integration.test.ts
 REPORT_GAS=true npx hardhat test
 ```
 
+### Continuous integration
+
+The [CI workflow](.github/workflows/ci.yml) runs on every pull request and on every push to `development` and `main`. It uses Node.js 20 and runs these steps from a fresh checkout:
+
+1. `npm ci`
+2. `npx hardhat compile`
+3. `npx hardhat test`
+
+The job needs no secrets or `.env` file. Because it starts from a fresh checkout, it fails if a file the tests need is missing from the repository, for example because `.gitignore` excludes it.
+
+To run the same checks locally before you open a pull request:
+
+```bash
+npm ci && npx hardhat compile && npx hardhat test
+```
+
+To reproduce the fresh-checkout condition, clone your branch into an empty directory and run the same command there.
+
 ### Test Coverage
 
 ```bash

@@ -9,6 +9,8 @@ ignition/deployments/*/build-info/
 dist/*
 !dist/abis/
 .*/
+# Track .github/: the rule above would silently ignore the CI workflows.
+!.github/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
